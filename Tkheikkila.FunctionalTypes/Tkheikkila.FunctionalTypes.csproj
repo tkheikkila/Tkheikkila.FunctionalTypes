@@ -16,5 +16,7 @@
         <Deterministic>true</Deterministic>
         <EnableNETAnalyzers>True</EnableNETAnalyzers>
         <AnalysisLevel>latest-recommended</AnalysisLevel>
+        <PackageProjectUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes.git</RepositoryUrl>
     </PropertyGroup>
 </Project>
