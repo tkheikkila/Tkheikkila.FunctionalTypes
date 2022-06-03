@@ -1,4 +1,4 @@
-﻿Tkheikkila.Types
+﻿Tkheikkila.FunctionalTypes
 ====
 
 Useful types missing from C#
