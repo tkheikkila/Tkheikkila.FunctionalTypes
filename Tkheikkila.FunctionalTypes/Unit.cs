@@ -4,9 +4,18 @@ public readonly record struct Unit
 {
     public static readonly Unit Value = default!;
 
-    public override int GetHashCode() => 0;
+    public bool Equals(Unit other)
+    {
+        return true;
+    }
 
-    public override string ToString() => "_";
+    public override int GetHashCode()
+    {
+        return 0;
+    }
 
-    public bool Equals(Unit other) => true;
+    public override string ToString()
+    {
+        return "_";
+    }
 }
