@@ -175,6 +175,60 @@ public readonly struct Maybe<T>
 
     #endregion
 
+    #region MapAsync
+
+    public async Task<Maybe<TResult>> MapAsync<TResult>(Func<T, Task<TResult>> onSome)
+    {
+        if (onSome == null)
+        {
+            throw new ArgumentNullException(nameof(onSome));
+        }
+
+        return HasValue
+            ? Maybe.Some(await onSome(_value))
+            : Maybe.None<TResult>();
+    }
+
+    public Task<TResult?> MapOrDefaultAsync<TResult>(Func<T, Task<TResult>> onSome)
+    {
+        if (onSome == null)
+        {
+            throw new ArgumentNullException(nameof(onSome));
+        }
+
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+        return HasValue
+            ? onSome(_value)
+            : Task.FromResult(default(TResult));
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+    }
+
+    public Task<TResult> MapOrDefaultAsync<TResult>(Func<T, Task<TResult>> onSome, TResult valueOnNone)
+    {
+        if (onSome == null)
+        {
+            throw new ArgumentNullException(nameof(onSome));
+        }
+
+        return HasValue
+            ? onSome(_value)
+            : Task.FromResult(valueOnNone);
+    }
+
+    public async Task<Maybe<TResult>> ZipAsync<TOther, TResult>(Maybe<TOther> other, Func<T, TOther, Task<TResult>> onBothSome)
+    {
+        if (onBothSome == null)
+        {
+            throw new ArgumentNullException(nameof(onBothSome));
+        }
+
+        return HasValue && other.HasValue
+            ? Maybe.Some(await onBothSome(_value, other._value))
+            : Maybe.None<TResult>();
+    }
+
+    #endregion
+
     #region FlatMap
 
     public Maybe<TOther> FlatMap<TOther>(Func<T, Maybe<TOther>> onSome)
@@ -198,6 +252,34 @@ public readonly struct Maybe<T>
 
         return HasValue
             ? this
+            : onNone();
+    }
+
+    #endregion
+
+    #region FlatMapAsync
+
+    public Task<Maybe<TOther>> FlatMapAsync<TOther>(Func<T, Task<Maybe<TOther>>> onSome)
+    {
+        if (onSome == null)
+        {
+            throw new ArgumentNullException(nameof(onSome));
+        }
+
+        return HasValue
+            ? onSome(_value)
+            : Maybe.NoneTask<TOther>();
+    }
+
+    public Task<Maybe<T>> FlatMapNoneAsync(Func<Task<Maybe<T>>> onNone)
+    {
+        if (onNone == null)
+        {
+            throw new ArgumentNullException(nameof(onNone));
+        }
+
+        return HasValue
+            ? Maybe.SomeTask(_value)
             : onNone();
     }
 

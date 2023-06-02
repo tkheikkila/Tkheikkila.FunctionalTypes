@@ -191,6 +191,110 @@ public sealed class Result<TError> : IEquatable<Result<TError>>
             : defaultValue;
     }
 
+    public TResult? MapErrorOrDefault<TResult>(Func<TError, TResult> onFailure)
+    {
+        if (onFailure == null)
+        {
+            throw new ArgumentNullException(nameof(onFailure));
+        }
+
+        return IsSuccess
+            ? default
+            : onFailure(_error);
+    }
+
+    public TResult MapErrorOrDefault<TResult>(Func<TError, TResult> onFailure, TResult defaultValue)
+    {
+        if (onFailure == null)
+        {
+            throw new ArgumentNullException(nameof(onFailure));
+        }
+
+        return IsSuccess
+            ? defaultValue
+            : onFailure(_error);
+    }
+
+    #endregion
+
+    #region MapAsync
+
+    public async Task<Result<TResult, TError>> MapAsync<TResult>(Func<Task<TResult>> onSuccess)
+    {
+        if (onSuccess == null)
+        {
+            throw new ArgumentNullException(nameof(onSuccess));
+        }
+
+        return IsSuccess
+            ? Result.Success<TResult, TError>(await onSuccess().ConfigureAwait(false))
+            : Result.Failure<TResult, TError>(_error);
+    }
+
+    public async Task<Result<TResult>> MapErrorAsync<TResult>(Func<TError, Task<TResult>> onFailure)
+    {
+        if (onFailure == null)
+        {
+            throw new ArgumentNullException(nameof(onFailure));
+        }
+
+        return IsSuccess
+            ? Result.Success<TResult>()
+            : Result.Failure(await onFailure(_error).ConfigureAwait(false));
+    }
+
+    public Task<TResult?> MapOrDefaultAsync<TResult>(Func<Task<TResult>> onSuccess)
+    {
+        if (onSuccess == null)
+        {
+            throw new ArgumentNullException(nameof(onSuccess));
+        }
+
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+        return IsSuccess
+            ? onSuccess()
+            : Task.FromResult(default(TResult));
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+    }
+
+    public Task<TResult> MapOrDefaultAsync<TResult>(Func<Task<TResult>> onSuccess, TResult defaultValue)
+    {
+        if (onSuccess == null)
+        {
+            throw new ArgumentNullException(nameof(onSuccess));
+        }
+
+        return IsSuccess
+            ? onSuccess()
+            : Task.FromResult(defaultValue);
+    }
+
+    public Task<TResult?> MapErrorOrDefaultAsync<TResult>(Func<TError, Task<TResult>> onFailure)
+    {
+        if (onFailure == null)
+        {
+            throw new ArgumentNullException(nameof(onFailure));
+        }
+
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+        return IsSuccess
+            ? Task.FromResult(default(TResult))
+            : onFailure(_error);
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+    }
+
+    public Task<TResult> MapErrorOrDefaultAsync<TResult>(Func<TError, Task<TResult>> onFailure, TResult defaultValue)
+    {
+        if (onFailure == null)
+        {
+            throw new ArgumentNullException(nameof(onFailure));
+        }
+
+        return IsSuccess
+            ? Task.FromResult(defaultValue)
+            : onFailure(_error);
+    }
+
     #endregion
 
     #region FlatMap
@@ -240,6 +344,58 @@ public sealed class Result<TError> : IEquatable<Result<TError>>
 
         return IsSuccess
             ? Result.Success<TError>()
+            : other(_error);
+    }
+
+    #endregion
+
+    #region FlatMapAsync
+
+    public Task<Result<TError>> FlatMapAsync(Func<Task<Result<TError>>> other)
+    {
+        if (other == null)
+        {
+            throw new ArgumentNullException(nameof(other));
+        }
+
+        return IsSuccess
+            ? other()
+            : Result.FailureTask(_error);
+    }
+
+    public Task<Result<TOther, TError>> FlatMapAsync<TOther>(Func<Task<Result<TOther, TError>>> other)
+    {
+        if (other == null)
+        {
+            throw new ArgumentNullException(nameof(other));
+        }
+
+        return IsSuccess
+            ? other()
+            : Result.FailureTask<TOther, TError>(_error);
+    }
+
+    public Task<Result<TOther>> FlatMapErrorAsync<TOther>(Func<TError, Task<Result<TOther>>> other)
+    {
+        if (other == null)
+        {
+            throw new ArgumentNullException(nameof(other));
+        }
+
+        return IsSuccess
+            ? Result.SuccessTask<TOther>()
+            : other(_error);
+    }
+
+    public Task<Result<TError>> FlatMapErrorAsync(Func<TError, Task<Result<TError>>> other)
+    {
+        if (other == null)
+        {
+            throw new ArgumentNullException(nameof(other));
+        }
+
+        return IsSuccess
+            ? Result.SuccessTask<TError>()
             : other(_error);
     }
 

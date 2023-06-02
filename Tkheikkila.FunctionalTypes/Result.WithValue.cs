@@ -265,54 +265,186 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 
     #endregion
 
-    #region FlatMap
+    #region MapAsync
 
-    public Result<TError> FlatMap(Func<TValue, Result<TError>> other)
+    public async Task<Result<TResult, TError>> MapAsync<TResult>(Func<TValue, Task<TResult>> map)
     {
-        if (other == null)
+        if (map == null)
         {
-            throw new ArgumentNullException(nameof(other));
+            throw new ArgumentNullException(nameof(map));
         }
 
         return IsSuccess
-            ? other(_value)
+            ? Result.Success<TResult, TError>(await map(_value).ConfigureAwait(false))
+            : Failure<TResult>(_error);
+    }
+
+    public async Task<Result<TValue, TResult>> MapErrorAsync<TResult>(Func<TError, Task<TResult>> map)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+        return IsSuccess
+            ? Success<TResult>(_value)
+            : Result.Failure<TValue, TResult>(await map(_error).ConfigureAwait(false));
+    }
+
+    public Task<TResult?> MapOrDefaultAsync<TResult>(Func<TValue, Task<TResult>> map)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+        return IsSuccess
+            ? map(_value)
+            : Task.FromResult(default(TResult));
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+    }
+
+    public Task<TResult> MapOrDefaultAsync<TResult>(Func<TValue, Task<TResult>> map, TResult defaultValue)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+        return IsSuccess
+            ? map(_value)
+            : Task.FromResult(defaultValue);
+    }
+
+    public Task<TResult?> MapErrorOrDefaultAsync<TResult>(Func<TError, Task<TResult>> map)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+        return IsSuccess
+            ? Task.FromResult(default(TResult))
+            : map(_error);
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+    }
+
+    public Task<TResult> MapErrorOrDefaultAsync<TResult>(Func<TError, Task<TResult>> map, TResult defaultValue)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+        return IsSuccess
+            ? Task.FromResult(defaultValue)
+            : map(_error);
+    }
+
+    #endregion
+
+    #region FlatMap
+
+    public Result<TError> FlatMap(Func<TValue, Result<TError>> map)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+        return IsSuccess
+            ? map(_value)
             : Result.Failure(_error);
     }
 
-    public Result<TOther, TError> FlatMap<TOther>(Func<TValue, Result<TOther, TError>> other)
+    public Result<TOther, TError> FlatMap<TOther>(Func<TValue, Result<TOther, TError>> map)
     {
-        if (other == null)
+        if (map == null)
         {
-            throw new ArgumentNullException(nameof(other));
+            throw new ArgumentNullException(nameof(map));
         }
 
         return IsSuccess
-            ? other(_value)
+            ? map(_value)
             : Failure<TOther>(_error);
     }
 
-    public Result<TValue, TOther> FlatMapError<TOther>(Func<TError, Result<TOther>> other)
+    public Result<TValue, TOther> FlatMapError<TOther>(Func<TError, Result<TOther>> map)
     {
-        if (other == null)
+        if (map == null)
         {
-            throw new ArgumentNullException(nameof(other));
+            throw new ArgumentNullException(nameof(map));
         }
 
         return IsSuccess
             ? Result.Success<TValue, TOther>(_value)
-            : other(_error).WithValue(_value);
+            : map(_error).WithValue(_value);
     }
 
-    public Result<TValue, TOther> FlatMapError<TOther>(Func<TError, Result<TValue, TOther>> other)
+    public Result<TValue, TOther> FlatMapError<TOther>(Func<TError, Result<TValue, TOther>> map)
     {
-        if (other == null)
+        if (map == null)
         {
-            throw new ArgumentNullException(nameof(other));
+            throw new ArgumentNullException(nameof(map));
         }
 
         return IsSuccess
             ? Success<TOther>(_value)
-            : other(_error);
+            : map(_error);
+    }
+
+    #endregion
+
+    #region FlatMapAsync
+
+    public Task<Result<TError>> FlatMapAsync(Func<TValue, Task<Result<TError>>> map)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+        return IsSuccess
+            ? map(_value)
+            : Result.FailureTask(_error);
+    }
+
+    public Task<Result<TOther, TError>> FlatMapAsync<TOther>(Func<TValue, Task<Result<TOther, TError>>> map)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+        return IsSuccess
+            ? map(_value)
+            : Result.FailureTask<TOther, TError>(_error);
+    }
+
+    public Task<Result<TOther>> FlatMapErrorAsync<TOther>(Func<TError, Task<Result<TOther>>> map)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+        return IsSuccess
+            ? Result.SuccessTask<TOther>()
+            : map(_error);
+    }
+
+    public Task<Result<TValue, TOther>> FlatMapErrorAsync<TOther>(Func<TError, Task<Result<TValue, TOther>>> map)
+    {
+        if (map == null)
+        {
+            throw new ArgumentNullException(nameof(map));
+        }
+
+        return IsSuccess
+            ? Result.SuccessTask<TValue, TOther>(_value)
+            : map(_error);
     }
 
     #endregion
