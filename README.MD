@@ -10,20 +10,31 @@ Inspired by Rust's
 
 ## `Result<TValue, TError>`
 
-**AKA:** `Either`
+**AKA:** strict `Either`
 
-A value that contains one of two values, but never both or neither.
+A value that can be in one of two states, but never both or neither.
 
-This type has two states:
+These states are:
 
-* `Success` that contains a value of type `TValue`
-* `Failure` that contains a value of type `TError`
+* `Success` that indicates success with a value of type `TValue`
+* `Failure` that indicates failure with a value of type `TError`
+
+## `Result<TError>`
+
+**AKA:** `Option` (`Maybe<TError>`) or strict `Either` without the other value (`Result<Unit, TError>`).
+
+A value that can be in one of two states, but never both or neither.
+
+These states are:
+
+* `Success` that indicates success contains no value
+* `Failure` that indicates failure with a value of type `TError`
 
 ## `Maybe<T>`
 
 **AKA:** `Option`
 
-A type that contains 0..1 values
+A value that may or may not contain a value of type `T`.
 
 This type has two states:
 
