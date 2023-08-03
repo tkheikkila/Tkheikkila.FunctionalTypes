@@ -263,7 +263,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             : Maybe.None<TOther>();
     }
 
-    public Maybe<T> FlatMapNone(Func<Maybe<T>> onNone)
+    public Maybe<TOther> FlatMapNone<TOther>(Func<Maybe<TOther>> onNone)
     {
         if (onNone == null)
         {
@@ -271,7 +271,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         }
 
         return HasValue
-            ? this
+            ? Maybe.None()
             : onNone();
     }
 
