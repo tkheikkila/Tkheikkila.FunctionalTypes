@@ -49,7 +49,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         return HasValue && predicate(_value);
     }
 
-    public Maybe<T> Peek(Action<T> onSome)
+    public Maybe<T> IfSome(Action<T> onSome)
     {
         if (onSome == null)
         {
@@ -64,7 +64,20 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         return this;
     }
 
-    #endregion
+    public Maybe<T> IfNone(Action action)
+    {
+        if (action == null)
+        {
+            throw new ArgumentNullException(nameof(action));
+        }
+
+        if (!HasValue)
+        {
+            action();
+        }
+
+        return this;
+    }
 
     public Maybe<T> Filter(Func<T, bool> predicate)
     {
@@ -77,6 +90,13 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             ? Maybe.Some(_value)
             : Maybe.None<T>();
     }
+
+    public bool Contains(T value)
+    {
+        return HasValue && EqualityComparer<T>.Default.Equals(_value, value);
+    }
+
+    #endregion
 
     #region Extracting state
 
