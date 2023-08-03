@@ -445,12 +445,12 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
     public static implicit operator Maybe<T>(T value)
     {
-        return Maybe.Some(value);
+        return new Maybe<T>(value);
     }
 
     public static implicit operator Maybe<T>(Unit _)
     {
-        return Maybe.None();
+        return new Maybe<T>();
     }
 
     public static implicit operator Maybe<T?>(Maybe<Unit> maybe)
