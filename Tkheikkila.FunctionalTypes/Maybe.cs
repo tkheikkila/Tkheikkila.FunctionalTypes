@@ -130,12 +130,12 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
     {
         if (HasValue)
         {
-            value = default;
-            return false;
+            value = _value;
+            return true;
         }
 
-        value = _value;
-        return true;
+        value = default;
+        return false;
     }
 
     #endregion
