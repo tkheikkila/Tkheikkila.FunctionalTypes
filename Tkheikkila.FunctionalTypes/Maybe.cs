@@ -126,6 +126,28 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             : onNone();
     }
 
+    public T GetValueOrThrow()
+    {
+        return HasValue
+            ? _value
+            : throw new InvalidOperationException("Maybe does not have a value.");
+    }
+
+    public T GetValueOrThrow<TException>(Func<TException> onNone) where TException : Exception
+    {
+        if (onNone == null)
+        {
+            throw new ArgumentNullException(nameof(onNone));
+        }
+
+        if (HasValue)
+        {
+            return _value;
+        }
+
+        throw onNone();
+    }
+
     public bool TryGetValue([MaybeNullWhen(false)] out T value)
     {
         if (HasValue)
