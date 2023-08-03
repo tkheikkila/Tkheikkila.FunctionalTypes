@@ -70,7 +70,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         {
             throw new ArgumentNullException(nameof(action));
         }
-
+        
         if (!HasValue)
         {
             action();
@@ -88,7 +88,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
         return HasValue && predicate(_value)
             ? Maybe.Some(_value)
-            : Maybe.None<T>();
+            : Maybe.None();
     }
 
     public bool Contains(T value)
@@ -173,7 +173,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
         return HasValue
             ? Maybe.Some(onSome(_value))
-            : Maybe.None<TResult>();
+            : Maybe.None();
     }
 
     public TResult? MapOrDefault<TResult>(Func<T, TResult> onSome)
@@ -219,7 +219,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
         return HasValue && other.HasValue
             ? Maybe.Some(onBothSome(_value, other._value))
-            : Maybe.None<TResult>();
+            : Maybe.None();
     }
 
     #endregion
@@ -235,7 +235,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
         return HasValue
             ? Maybe.Some(await onSome(_value).ConfigureAwait(false))
-            : Maybe.None<TResult>();
+            : Maybe.None();
     }
 
     public ValueTask<TResult?> MapOrDefaultAsync<TResult>(Func<T, ValueTask<TResult>> onSome)
@@ -273,7 +273,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
         return HasValue && other.HasValue
             ? Maybe.Some(await onBothSome(_value, other._value).ConfigureAwait(false))
-            : Maybe.None<TResult>();
+            : Maybe.None();
     }
 
     #endregion
@@ -289,7 +289,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
         return HasValue
             ? onSome(_value)
-            : Maybe.None<TOther>();
+            : Maybe.None();
     }
 
     public Maybe<TOther> FlatMapNone<TOther>(Func<Maybe<TOther>> onNone)
@@ -450,7 +450,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
     public static implicit operator Maybe<T>(Unit _)
     {
-        return Maybe.None<T>();
+        return Maybe.None();
     }
 
     public static implicit operator Maybe<T?>(Maybe<Unit> maybe)
