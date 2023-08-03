@@ -2,7 +2,7 @@
 
 namespace Tkheikkila.FunctionalTypes;
 
-public readonly struct Maybe<T>
+public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 {
     private readonly T _value;
 
@@ -357,13 +357,25 @@ public readonly struct Maybe<T>
         {
             (true, true)   => Equals(_value, other._value),
             (false, false) => true,
-            _              => false
+            _              => typeof(T) == typeof(Unit)
         };
+    }
+
+    public bool Equals(T? other)
+    {
+        return HasValue && Equals(_value, other) || typeof(T) == typeof(Unit);
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is Maybe<T> maybe && Equals(maybe);
+        return obj switch
+        {
+            Unit           => !HasValue || typeof(T) == typeof(Unit),
+            Maybe<T> maybe => Equals(maybe),
+            T value        => Equals(value),
+            null           => HasValue && _value is null,
+            _              => false
+        };
     }
 
     public override int GetHashCode()
@@ -388,6 +400,56 @@ public readonly struct Maybe<T>
     public static implicit operator Maybe<T>(T value)
     {
         return Maybe.Some(value);
+    }
+
+    public static bool operator ==(Maybe<T> left, Maybe<T> right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Maybe<T> left, Maybe<T> right)
+    {
+        return !left.Equals(right);
+    }
+
+    public static bool operator ==(Maybe<T> left, T right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Maybe<T> left, T right)
+    {
+        return !left.Equals(right);
+    }
+
+    public static bool operator ==(T left, Maybe<T> right)
+    {
+        return right.Equals(left);
+    }
+
+    public static bool operator !=(T left, Maybe<T> right)
+    {
+        return !right.Equals(left);
+    }
+
+    public static bool operator ==(Maybe<T> left, Unit right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Maybe<T> left, Unit right)
+    {
+        return !(left == right);
+    }
+
+    public static bool operator ==(Unit left, Maybe<T> right)
+    {
+        return right == left;
+    }
+
+    public static bool operator !=(Unit left, Maybe<T> right)
+    {
+        return right != left;
     }
 
     #endregion
