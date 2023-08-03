@@ -200,6 +200,13 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             : valueOnNone;
     }
 
+    public Maybe<(T, TOther)> Zip<TOther>(Maybe<TOther> other)
+    {
+        return HasValue && other.HasValue
+            ? Maybe.Some((_value, other._value))
+            : Maybe.None();
+    }
+
     public Maybe<TResult> Zip<TOther, TResult>(
         Maybe<TOther> other,
         Func<T, TOther, TResult> onBothSome
