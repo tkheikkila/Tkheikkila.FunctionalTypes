@@ -287,14 +287,21 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
     #region Conversions
 
-    public Result<T, TError> AsSomeSuccessOr<TError>(TError errorOnNone)
+    public Result<T, Unit> AsSuccess()
+    {
+        return HasValue
+            ? Result.Success<T, Unit>(_value)
+            : Result.Failure<T, Unit>(Unit.Value);
+    }
+
+    public Result<T, TError> AsSuccessOr<TError>(TError errorOnNone)
     {
         return HasValue
             ? Result.Success<T, TError>(_value)
             : Result.Failure<T, TError>(errorOnNone);
     }
 
-    public Result<T, TError> AsSomeSuccessOrElse<TError>(Func<TError> onNone)
+    public Result<T, TError> AsSuccessOrElse<TError>(Func<TError> onNone)
     {
         if (onNone == null)
         {
@@ -306,21 +313,21 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             : Result.Failure<T, TError>(onNone());
     }
 
-    public Result<T> AsSomeFailure()
+    public Result<Unit, T> AsFailure()
     {
         return HasValue
-            ? Result.Failure(_value)
-            : Result.Success<T>();
+            ? Result.Failure<Unit, T>(_value)
+            : Result.Success<Unit, T>(Unit.Value);
     }
 
-    public Result<TValue, T> AsSomeFailureOr<TValue>(TValue valueOnNone)
+    public Result<TValue, T> AsFailureOr<TValue>(TValue valueOnNone)
     {
         return HasValue
             ? Result.Failure<TValue, T>(_value)
             : Result.Success<TValue, T>(valueOnNone);
     }
 
-    public Result<TValue, T> AsSomeFailureOrElse<TValue>(Func<TValue> onNone)
+    public Result<TValue, T> AsFailureOrElse<TValue>(Func<TValue> onNone)
     {
         if (onNone == null)
         {
@@ -387,19 +394,44 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
     #region Operators
 
-    public static explicit operator Maybe<Unit>(Maybe<T> other)
-    {
-        return other.Map(_ => Unit.Value);
-    }
-
-    public static explicit operator Maybe<T?>(Maybe<Unit> other)
-    {
-        return other.Map(_ => default(T));
-    }
-
     public static implicit operator Maybe<T>(T value)
     {
         return Maybe.Some(value);
+    }
+
+    public static implicit operator Maybe<T>(Unit _)
+    {
+        return Maybe.None<T>();
+    }
+
+    public static implicit operator Maybe<T?>(Maybe<Unit> maybe)
+    {
+        return maybe.Map(_ => default(T));
+    }
+
+    public static implicit operator Maybe<Unit>(Maybe<T> maybe)
+    {
+        return maybe.Map(_ => Unit.Value);
+    }
+
+    public static implicit operator Maybe<T>(Result<T, Unit> result)
+    {
+        return result.GetValue();
+    }
+
+    public static implicit operator Maybe<T>(Result<Unit, T> result)
+    {
+        return result.GetError();
+    }
+
+    public static implicit operator Result<T, Unit>(Maybe<T> maybe)
+    {
+        return maybe.AsSuccess();
+    }
+
+    public static implicit operator Result<Unit, T>(Maybe<T> maybe)
+    {
+        return maybe.AsFailure();
     }
 
     public static bool operator ==(Maybe<T> left, Maybe<T> right)
