@@ -10,14 +10,14 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
 
-    internal Result(TValue value)
+    public Result(TValue value)
     {
         IsSuccess = true;
         _value = value;
         _error = default!;
     }
 
-    internal Result(TError error)
+    public Result(TError error)
     {
         IsSuccess = false;
         _value = default!;
@@ -43,7 +43,7 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 
     #region Inspecting state
 
-    public Result<TValue, TError> Peek(Action<TValue> onSuccess)
+    public Result<TValue, TError> IfSuccess(Action<TValue> onSuccess)
     {
         if (onSuccess == null)
         {
@@ -58,7 +58,7 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
         return this;
     }
 
-    public Result<TValue, TError> PeekError(Action<TError> onFailure)
+    public Result<TValue, TError> IfFailure(Action<TError> onFailure)
     {
         if (onFailure == null)
         {
@@ -123,6 +123,29 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
             : _error;
     }
 
+    public TError GetErrorOrThrow()
+    {
+        return IsFailure
+            ? _error
+            : throw new InvalidOperationException("Success does not have an error.");
+    }
+
+    public TError GetErrorOrThrow<TException>(Func<TValue, TException> onSuccess)
+        where TException : Exception
+    {
+        if (onSuccess == null)
+        {
+            throw new ArgumentNullException(nameof(onSuccess));
+        }
+
+        if (IsFailure)
+        {
+            return _error;
+        }
+
+        throw onSuccess(_value);
+    }
+
     public TValue? GetValueOrDefault()
     {
         return IsSuccess
@@ -149,6 +172,29 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
             : onFailure(_error);
     }
 
+    public TValue GetValueOrThrow()
+    {
+        return IsSuccess
+            ? _value
+            : throw new InvalidOperationException("Failure does not have a value.");
+    }
+
+    public TValue GetValueOrThrow<TException>(Func<TError, TException> onFailure)
+        where TException : Exception
+    {
+        if (onFailure == null)
+        {
+            throw new ArgumentNullException(nameof(onFailure));
+        }
+
+        if (IsSuccess)
+        {
+            return _value;
+        }
+
+        throw onFailure(_error);
+    }
+
     public bool TryGetError([MaybeNullWhen(false)] out TError error)
     {
         if (IsSuccess)
@@ -173,18 +219,36 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
         return true;
     }
 
-    public Maybe<TError> GetSomeValueOrNone()
+    public Maybe<TValue> GetValue()
+    {
+        return IsSuccess
+            ? Maybe.Some(_value)
+            : Maybe.None<TValue>();
+    }
+
+    public Maybe<TError> GetError()
     {
         return IsSuccess
             ? Maybe.None<TError>()
             : Maybe.Some(_error);
     }
 
-    public Maybe<TError> GetSomeErrorOrNone()
+    #endregion
+
+    #region Setting state
+
+    public Result<TOther, TError> ReplaceValue<TOther>(TOther value)
     {
         return IsSuccess
-            ? Maybe.None<TError>()
-            : Maybe.Some(_error);
+            ? Success(value)
+            : Failure<TOther>(_error);
+    }
+
+    public Result<TValue, TOther> ReplaceError<TOther>(TOther error)
+    {
+        return IsSuccess
+            ? Success<TOther>(_value)
+            : Failure(error);
     }
 
     #endregion
@@ -267,31 +331,27 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 
     #region MapAsync
 
-    public async Task<Result<TResult, TError>> MapAsync<TResult>(Func<TValue, Task<TResult>> map)
+    public ValueTask<Result<TResult, TError>> MapAsync<TResult>(Func<TValue, ValueTask<TResult>> map)
     {
         if (map == null)
         {
             throw new ArgumentNullException(nameof(map));
         }
 
-        return IsSuccess
-            ? Result.Success<TResult, TError>(await map(_value).ConfigureAwait(false))
-            : Failure<TResult>(_error);
+        return FlatMapAsync(async value => Result.Success<TResult, TError>(await map(value).ConfigureAwait(false)));
     }
 
-    public async Task<Result<TValue, TResult>> MapErrorAsync<TResult>(Func<TError, Task<TResult>> map)
+    public ValueTask<Result<TValue, TResult>> MapErrorAsync<TResult>(Func<TError, ValueTask<TResult>> map)
     {
         if (map == null)
         {
             throw new ArgumentNullException(nameof(map));
         }
 
-        return IsSuccess
-            ? Success<TResult>(_value)
-            : Result.Failure<TValue, TResult>(await map(_error).ConfigureAwait(false));
+        return FlatMapErrorAsync(async error => Result.Failure<TValue, TResult>(await map(error).ConfigureAwait(false)));
     }
 
-    public Task<TResult?> MapOrDefaultAsync<TResult>(Func<TValue, Task<TResult>> map)
+    public ValueTask<TResult?> MapOrDefaultAsync<TResult>(Func<TValue, ValueTask<TResult>> map)
     {
         if (map == null)
         {
@@ -301,11 +361,11 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
         return IsSuccess
             ? map(_value)
-            : Task.FromResult(default(TResult));
+            : new ValueTask<TResult?>(default(TResult?));
 #pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
     }
 
-    public Task<TResult> MapOrDefaultAsync<TResult>(Func<TValue, Task<TResult>> map, TResult defaultValue)
+    public ValueTask<TResult> MapOrDefaultAsync<TResult>(Func<TValue, ValueTask<TResult>> map, TResult defaultValue)
     {
         if (map == null)
         {
@@ -314,10 +374,10 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 
         return IsSuccess
             ? map(_value)
-            : Task.FromResult(defaultValue);
+            : new ValueTask<TResult>(defaultValue);
     }
 
-    public Task<TResult?> MapErrorOrDefaultAsync<TResult>(Func<TError, Task<TResult>> map)
+    public ValueTask<TResult?> MapErrorOrDefaultAsync<TResult>(Func<TError, ValueTask<TResult>> map)
     {
         if (map == null)
         {
@@ -326,12 +386,12 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
         return IsSuccess
-            ? Task.FromResult(default(TResult))
+            ? new ValueTask<TResult?>(default(TResult?))
             : map(_error);
 #pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
     }
 
-    public Task<TResult> MapErrorOrDefaultAsync<TResult>(Func<TError, Task<TResult>> map, TResult defaultValue)
+    public ValueTask<TResult> MapErrorOrDefaultAsync<TResult>(Func<TError, ValueTask<TResult>> map, TResult defaultValue)
     {
         if (map == null)
         {
@@ -339,25 +399,13 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
         }
 
         return IsSuccess
-            ? Task.FromResult(defaultValue)
+            ? new ValueTask<TResult>(defaultValue)
             : map(_error);
     }
 
     #endregion
 
     #region FlatMap
-
-    public Result<TError> FlatMap(Func<TValue, Result<TError>> map)
-    {
-        if (map == null)
-        {
-            throw new ArgumentNullException(nameof(map));
-        }
-
-        return IsSuccess
-            ? map(_value)
-            : Result.Failure(_error);
-    }
 
     public Result<TOther, TError> FlatMap<TOther>(Func<TValue, Result<TOther, TError>> map)
     {
@@ -369,18 +417,6 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
         return IsSuccess
             ? map(_value)
             : Failure<TOther>(_error);
-    }
-
-    public Result<TValue, TOther> FlatMapError<TOther>(Func<TError, Result<TOther>> map)
-    {
-        if (map == null)
-        {
-            throw new ArgumentNullException(nameof(map));
-        }
-
-        return IsSuccess
-            ? Result.Success<TValue, TOther>(_value)
-            : map(_error).WithValue(_value);
     }
 
     public Result<TValue, TOther> FlatMapError<TOther>(Func<TError, Result<TValue, TOther>> map)
@@ -399,7 +435,7 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 
     #region FlatMapAsync
 
-    public Task<Result<TError>> FlatMapAsync(Func<TValue, Task<Result<TError>>> map)
+    public ValueTask<Result<TOther, TError>> FlatMapAsync<TOther>(Func<TValue, ValueTask<Result<TOther, TError>>> map)
     {
         if (map == null)
         {
@@ -408,10 +444,10 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 
         return IsSuccess
             ? map(_value)
-            : Result.FailureTask(_error);
+            : Result.FailureValueTask<TOther, TError>(_error);
     }
 
-    public Task<Result<TOther, TError>> FlatMapAsync<TOther>(Func<TValue, Task<Result<TOther, TError>>> map)
+    public ValueTask<Result<TValue, TOther>> FlatMapErrorAsync<TOther>(Func<TError, ValueTask<Result<TValue, TOther>>> map)
     {
         if (map == null)
         {
@@ -419,31 +455,7 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
         }
 
         return IsSuccess
-            ? map(_value)
-            : Result.FailureTask<TOther, TError>(_error);
-    }
-
-    public Task<Result<TOther>> FlatMapErrorAsync<TOther>(Func<TError, Task<Result<TOther>>> map)
-    {
-        if (map == null)
-        {
-            throw new ArgumentNullException(nameof(map));
-        }
-
-        return IsSuccess
-            ? Result.SuccessTask<TOther>()
-            : map(_error);
-    }
-
-    public Task<Result<TValue, TOther>> FlatMapErrorAsync<TOther>(Func<TError, Task<Result<TValue, TOther>>> map)
-    {
-        if (map == null)
-        {
-            throw new ArgumentNullException(nameof(map));
-        }
-
-        return IsSuccess
-            ? Result.SuccessTask<TValue, TOther>(_value)
+            ? Result.SuccessValueTask<TValue, TOther>(_value)
             : map(_error);
     }
 
@@ -474,12 +486,20 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
         }
     }
 
-    public Result<TError> WithoutValue()
+    public Result<Unit, TError> WithoutValue()
     {
         return IsSuccess
-            ? Result.Success<TError>()
-            : Result.Failure(_error);
+            ? Success(Unit.Value)
+            : Failure<Unit>(_error);
     }
+
+    public Result<TValue, Unit> WithoutError()
+    {
+        return IsSuccess
+            ? Success<Unit>(_value)
+            : Failure(Unit.Value);
+    }
+
 
     public override string ToString()
     {
@@ -514,7 +534,11 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
 
     public override bool Equals(object? obj)
     {
-        return Equals(obj as Result<TValue, TError>);
+        return obj switch
+        {
+            Result<TValue, TError> result => Equals(result),
+            _                             => false
+        };
     }
 
     public override int GetHashCode()
@@ -546,9 +570,14 @@ public sealed class Result<TValue, TError> : IEquatable<Result<TValue, TError>>
         return Result.Failure<TValue, TError>(value);
     }
 
-    public static implicit operator Result<TError>(Result<TValue, TError> result)
+    public static implicit operator Result<Unit, TError>(Result<TValue, TError> result)
     {
-        return result.FlatMapError(Result.Failure);
+        return result.Map(_ => Unit.Value);
+    }
+
+    public static implicit operator Result<TValue, Unit>(Result<TValue, TError> result)
+    {
+        return result.MapError(_ => Unit.Value);
     }
 
     public static bool operator true(Result<TValue, TError> result)

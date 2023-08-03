@@ -71,6 +71,7 @@ csharp_style_var_when_type_is_apparent = true:silent
 # ReSharper properties
 resharper_csharp_wrap_ternary_expr_style = chop_always
 resharper_int_align_switch_sections = true
+dotnet_diagnostic.S3216.severity = error
 
 [*.{cs,vb}]
 #### Naming styles ####
@@ -153,3 +154,4 @@ dotnet_style_qualification_for_field = false:silent
 dotnet_style_qualification_for_property = false:silent
 dotnet_style_qualification_for_event = false:silent
 dotnet_style_qualification_for_method = false:silent
+dotnet_diagnostic.CA2007.severity = error
