@@ -26,24 +26,4 @@ public static class Maybe
     {
         return new Maybe<T>(value);
     }
-
-    public static Task<Maybe<T>> NoneTask<T>()
-    {
-        return Task.FromResult(None<T>());
-    }
-
-    public static Task<Maybe<T>> SomeTask<T>(T value)
-    {
-        return Task.FromResult(Some(value));
-    }
-
-    public static ValueTask<Maybe<T>> NoneValueTask<T>()
-    {
-        return new ValueTask<Maybe<T>>(None<T>());
-    }
-
-    public static ValueTask<Maybe<T>> SomeValueTask<T>(T value)
-    {
-        return new ValueTask<Maybe<T>>(Some(value));
-    }
 }

@@ -162,7 +162,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
     #endregion
 
-    #region Map
+    #region Map*
 
     public Maybe<TResult> Map<TResult>(Func<T, TResult> onSome)
     {
@@ -200,32 +200,6 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             : valueOnNone;
     }
 
-    public Maybe<(T, TOther)> Zip<TOther>(Maybe<TOther> other)
-    {
-        return HasValue && other.HasValue
-            ? Maybe.Some((_value, other._value))
-            : Maybe.None();
-    }
-
-    public Maybe<TResult> Zip<TOther, TResult>(
-        Maybe<TOther> other,
-        Func<T, TOther, TResult> onBothSome
-    )
-    {
-        if (onBothSome == null)
-        {
-            throw new ArgumentNullException(nameof(onBothSome));
-        }
-
-        return HasValue && other.HasValue
-            ? Maybe.Some(onBothSome(_value, other._value))
-            : Maybe.None();
-    }
-
-    #endregion
-
-    #region MapAsync
-
     public async ValueTask<Maybe<TResult>> MapAsync<TResult>(Func<T, ValueTask<TResult>> onSome)
     {
         if (onSome == null)
@@ -238,21 +212,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             : Maybe.None();
     }
 
-    public ValueTask<TResult?> MapOrDefaultAsync<TResult>(Func<T, ValueTask<TResult>> onSome)
-    {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
-        return HasValue
-            ? onSome(_value)
-            : new ValueTask<TResult?>(default(TResult));
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
-    }
-
-    public ValueTask<TResult> MapOrDefaultAsync<TResult>(Func<T, ValueTask<TResult>> onSome, TResult valueOnNone)
+    public async ValueTask<TResult?> MapOrDefaultAsync<TResult>(Func<T, ValueTask<TResult>> onSome)
     {
         if (onSome == null)
         {
@@ -260,25 +220,25 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         }
 
         return HasValue
-            ? onSome(_value)
-            : new ValueTask<TResult>(valueOnNone);
+            ? await onSome(_value).ConfigureAwait(false)
+            : default;
     }
 
-    public async ValueTask<Maybe<TResult>> ZipAsync<TOther, TResult>(Maybe<TOther> other, Func<T, TOther, ValueTask<TResult>> onBothSome)
+    public async ValueTask<TResult> MapOrDefaultAsync<TResult>(Func<T, ValueTask<TResult>> onSome, TResult valueOnNone)
     {
-        if (onBothSome == null)
+        if (onSome == null)
         {
-            throw new ArgumentNullException(nameof(onBothSome));
+            throw new ArgumentNullException(nameof(onSome));
         }
 
-        return HasValue && other.HasValue
-            ? Maybe.Some(await onBothSome(_value, other._value).ConfigureAwait(false))
-            : Maybe.None();
+        return HasValue
+            ? await onSome(_value).ConfigureAwait(false)
+            : valueOnNone;
     }
 
     #endregion
 
-    #region FlatMap
+    #region FlatMap*
 
     public Maybe<TOther> FlatMap<TOther>(Func<T, Maybe<TOther>> onSome)
     {
@@ -304,11 +264,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             : onNone();
     }
 
-    #endregion
-
-    #region FlatMapAsync
-
-    public ValueTask<Maybe<TOther>> FlatMapAsync<TOther>(Func<T, ValueTask<Maybe<TOther>>> onSome)
+    public async ValueTask<Maybe<TOther>> FlatMapAsync<TOther>(Func<T, ValueTask<Maybe<TOther>>> onSome)
     {
         if (onSome == null)
         {
@@ -316,11 +272,11 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         }
 
         return HasValue
-            ? onSome(_value)
-            : Maybe.NoneValueTask<TOther>();
+            ? await onSome(_value).ConfigureAwait(false)
+            : Maybe.None();
     }
 
-    public ValueTask<Maybe<TOther>> FlatMapNoneAsync<TOther>(Func<ValueTask<Maybe<TOther>>> onNone)
+    public async ValueTask<Maybe<TOther>> FlatMapNoneAsync<TOther>(Func<ValueTask<Maybe<TOther>>> onNone)
     {
         if (onNone == null)
         {
@@ -328,8 +284,46 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         }
 
         return HasValue
-            ? Maybe.NoneValueTask<TOther>()
-            : onNone();
+            ? Maybe.None()
+            : await onNone().ConfigureAwait(false);
+    }
+
+    #endregion
+
+    #region Zip*
+
+    public Maybe<(T, TOther)> Zip<TOther>(Maybe<TOther> other)
+    {
+        return HasValue && other.HasValue
+            ? Maybe.Some((_value, other._value))
+            : Maybe.None();
+    }
+
+    public Maybe<TResult> Zip<TOther, TResult>(
+        Maybe<TOther> other,
+        Func<T, TOther, TResult> onBothSome
+    )
+    {
+        if (onBothSome == null)
+        {
+            throw new ArgumentNullException(nameof(onBothSome));
+        }
+
+        return HasValue && other.HasValue
+            ? Maybe.Some(onBothSome(_value, other._value))
+            : Maybe.None();
+    }
+
+    public async ValueTask<Maybe<TResult>> ZipAsync<TOther, TResult>(Maybe<TOther> other, Func<T, TOther, ValueTask<TResult>> onBothSome)
+    {
+        if (onBothSome == null)
+        {
+            throw new ArgumentNullException(nameof(onBothSome));
+        }
+
+        return HasValue && other.HasValue
+            ? Maybe.Some(await onBothSome(_value, other._value).ConfigureAwait(false))
+            : Maybe.None();
     }
 
     #endregion
@@ -339,8 +333,8 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
     public Result<T, Unit> AsSuccess()
     {
         return HasValue
-            ? Result.Success<T, Unit>(_value)
-            : Result.Failure<T, Unit>(Unit.Value);
+            ? Result.Success(_value)
+            : Result.Failure<T>();
     }
 
     public Result<T, TError> AsSuccessOr<TError>(TError errorOnNone)
@@ -365,8 +359,8 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
     public Result<Unit, T> AsFailure()
     {
         return HasValue
-            ? Result.Failure<Unit, T>(_value)
-            : Result.Success<Unit, T>(Unit.Value);
+            ? Result.Failure(_value)
+            : Result.Success<T>();
     }
 
     public Result<TValue, T> AsFailureOr<TValue>(TValue valueOnNone)
