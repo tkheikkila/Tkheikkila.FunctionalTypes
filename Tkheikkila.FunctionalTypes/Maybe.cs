@@ -2,13 +2,13 @@
 
 namespace Tkheikkila.FunctionalTypes;
 
-public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
+public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 {
     private readonly T _value;
 
     public bool HasValue { get; }
 
-    public Maybe(T value)
+	public Maybe(T value)
     {
         _value = value;
         HasValue = true;
@@ -22,73 +22,38 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
     public TResult Match<TResult>(Func<T, TResult> onSome, Func<TResult> onNone)
     {
-        if (onNone == null)
-        {
-            throw new ArgumentNullException(nameof(onNone));
-        }
-
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
+        onNone.ThrowIfNull(nameof(onNone));
+		onSome.ThrowIfNull(nameof(onSome));
 
         return HasValue
             ? onSome(_value)
             : onNone();
     }
 
-    #region Inspecting state
+    public void Match(Action<T> onSome, Action onNone)
+	{
+		onNone.ThrowIfNull(nameof(onNone));
+		onSome.ThrowIfNull(nameof(onSome));
 
-    public bool HasValueWith(Func<T, bool> predicate)
+		if (HasValue)
+		{
+			onSome(_value);
+		}
+		else
+		{
+			onNone();
+		}
+	}
+
+	#region Inspecting state
+
+	public Maybe<T> Filter(Func<T, bool> predicate)
     {
-        if (predicate == null)
-        {
-            throw new ArgumentNullException(nameof(predicate));
-        }
+		predicate.ThrowIfNull(nameof(predicate));
 
-        return HasValue && predicate(_value);
-    }
-
-    public Maybe<T> IfSome(Action<T> onSome)
-    {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        if (HasValue)
-        {
-            onSome(_value);
-        }
-
-        return this;
-    }
-
-    public Maybe<T> IfNone(Action action)
-    {
-        if (action == null)
-        {
-            throw new ArgumentNullException(nameof(action));
-        }
-        
-        if (!HasValue)
-        {
-            action();
-        }
-
-        return this;
-    }
-
-    public Maybe<T> Filter(Func<T, bool> predicate)
-    {
-        if (predicate == null)
-        {
-            throw new ArgumentNullException(nameof(predicate));
-        }
-
-        return HasValue && predicate(_value)
-            ? Maybe.Some(_value)
-            : Maybe.None();
+		return HasValue && predicate(_value)
+            ? Some(_value)
+            : None();
     }
 
     public bool Contains(T value)
@@ -107,7 +72,8 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
             : default;
     }
 
-    public T GetValueOrDefault(T defaultValue)
+    [return: NotNullIfNotNull(nameof(defaultValue))]
+    public T? GetValueOrDefault(T? defaultValue)
     {
         return HasValue
             ? _value
@@ -116,36 +82,11 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
     public T GetValueOrElse(Func<T> onNone)
     {
-        if (onNone == null)
-        {
-            throw new ArgumentNullException(nameof(onNone));
-        }
+		onNone.ThrowIfNull(nameof(onNone));
 
-        return HasValue
+		return HasValue
             ? _value
             : onNone();
-    }
-
-    public T GetValueOrThrow()
-    {
-        return HasValue
-            ? _value
-            : throw new InvalidOperationException("Maybe does not have a value.");
-    }
-
-    public T GetValueOrThrow<TException>(Func<TException> onNone) where TException : Exception
-    {
-        if (onNone == null)
-        {
-            throw new ArgumentNullException(nameof(onNone));
-        }
-
-        if (HasValue)
-        {
-            return _value;
-        }
-
-        throw onNone();
     }
 
     public bool TryGetValue([MaybeNullWhen(false)] out T value)
@@ -162,239 +103,39 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
     #endregion
 
-    #region Map*
+    #region Map
 
-    public Maybe<TResult> Map<TResult>(Func<T, TResult> onSome)
+    public Maybe<TResult> Map<TResult>(Func<T, TResult> map)
     {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        return HasValue
-            ? Maybe.Some(onSome(_value))
-            : Maybe.None();
+        return FlatMap(value => Maybe<TResult>.Some(map(value)));
     }
 
-    public TResult? MapOrDefault<TResult>(Func<T, TResult> onSome)
+    public TResult? MapOrDefault<TResult>(Func<T, TResult> map)
     {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        return HasValue
-            ? onSome(_value)
-            : default;
+        return MapOrDefault(map, default);
     }
 
-    public TResult MapOrDefault<TResult>(Func<T, TResult> onSome, TResult valueOnNone)
+    [return: NotNullIfNotNull(nameof(valueOnNone))]
+    public TResult? MapOrDefault<TResult>(Func<T, TResult> onSome, TResult? valueOnNone)
     {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        return HasValue
-            ? onSome(_value)
-            : valueOnNone;
-    }
-
-    public async ValueTask<Maybe<TResult>> MapAsync<TResult>(Func<T, ValueTask<TResult>> onSome)
-    {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        return HasValue
-            ? Maybe.Some(await onSome(_value).ConfigureAwait(false))
-            : Maybe.None();
-    }
-
-    public async ValueTask<TResult?> MapOrDefaultAsync<TResult>(Func<T, ValueTask<TResult>> onSome)
-    {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        return HasValue
-            ? await onSome(_value).ConfigureAwait(false)
-            : default;
-    }
-
-    public async ValueTask<TResult> MapOrDefaultAsync<TResult>(Func<T, ValueTask<TResult>> onSome, TResult valueOnNone)
-    {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        return HasValue
-            ? await onSome(_value).ConfigureAwait(false)
-            : valueOnNone;
-    }
+        return Match(
+			onSome,
+			() => valueOnNone
+		);
+	}
 
     #endregion
 
-    #region FlatMap*
+    #region FlatMap
 
     public Maybe<TOther> FlatMap<TOther>(Func<T, Maybe<TOther>> onSome)
     {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        return HasValue
-            ? onSome(_value)
-            : Maybe.None();
+        return Match(onSome, Maybe<TOther>.None);
     }
 
     public Maybe<TOther> FlatMapNone<TOther>(Func<Maybe<TOther>> onNone)
     {
-        if (onNone == null)
-        {
-            throw new ArgumentNullException(nameof(onNone));
-        }
-
-        return HasValue
-            ? Maybe.None()
-            : onNone();
-    }
-
-    public async ValueTask<Maybe<TOther>> FlatMapAsync<TOther>(Func<T, ValueTask<Maybe<TOther>>> onSome)
-    {
-        if (onSome == null)
-        {
-            throw new ArgumentNullException(nameof(onSome));
-        }
-
-        return HasValue
-            ? await onSome(_value).ConfigureAwait(false)
-            : Maybe.None();
-    }
-
-    public async ValueTask<Maybe<TOther>> FlatMapNoneAsync<TOther>(Func<ValueTask<Maybe<TOther>>> onNone)
-    {
-        if (onNone == null)
-        {
-            throw new ArgumentNullException(nameof(onNone));
-        }
-
-        return HasValue
-            ? Maybe.None()
-            : await onNone().ConfigureAwait(false);
-    }
-
-    #endregion
-
-    #region Zip*
-
-    public Maybe<(T, TOther)> Zip<TOther>(Maybe<TOther> other)
-    {
-        return HasValue && other.HasValue
-            ? Maybe.Some((_value, other._value))
-            : Maybe.None();
-    }
-
-    public Maybe<TResult> Zip<TOther, TResult>(
-        Maybe<TOther> other,
-        Func<T, TOther, TResult> onBothSome
-    )
-    {
-        if (onBothSome == null)
-        {
-            throw new ArgumentNullException(nameof(onBothSome));
-        }
-
-        return HasValue && other.HasValue
-            ? Maybe.Some(onBothSome(_value, other._value))
-            : Maybe.None();
-    }
-
-    public async ValueTask<Maybe<TResult>> ZipAsync<TOther, TResult>(Maybe<TOther> other, Func<T, TOther, ValueTask<TResult>> onBothSome)
-    {
-        if (onBothSome == null)
-        {
-            throw new ArgumentNullException(nameof(onBothSome));
-        }
-
-        return HasValue && other.HasValue
-            ? Maybe.Some(await onBothSome(_value, other._value).ConfigureAwait(false))
-            : Maybe.None();
-    }
-
-    #endregion
-
-    #region Conversions
-
-    public Result<T, Unit> AsSuccess()
-    {
-        return HasValue
-            ? Result.Success(_value)
-            : Result.Failure<T>();
-    }
-
-    public Result<T, TError> AsSuccessOr<TError>(TError errorOnNone)
-    {
-        return HasValue
-            ? Result.Success<T, TError>(_value)
-            : Result.Failure<T, TError>(errorOnNone);
-    }
-
-    public Result<T, TError> AsSuccessOrElse<TError>(Func<TError> onNone)
-    {
-        if (onNone == null)
-        {
-            throw new ArgumentNullException(nameof(onNone));
-        }
-
-        return HasValue
-            ? Result.Success<T, TError>(_value)
-            : Result.Failure<T, TError>(onNone());
-    }
-
-    public Result<Unit, T> AsFailure()
-    {
-        return HasValue
-            ? Result.Failure(_value)
-            : Result.Success<T>();
-    }
-
-    public Result<TValue, T> AsFailureOr<TValue>(TValue valueOnNone)
-    {
-        return HasValue
-            ? Result.Failure<TValue, T>(_value)
-            : Result.Success<TValue, T>(valueOnNone);
-    }
-
-    public Result<TValue, T> AsFailureOrElse<TValue>(Func<TValue> onNone)
-    {
-        if (onNone == null)
-        {
-            throw new ArgumentNullException(nameof(onNone));
-        }
-
-        return HasValue
-            ? Result.Failure<TValue, T>(_value)
-            : Result.Success<TValue, T>(onNone());
-    }
-
-    public IEnumerable<T> AsEnumerable()
-    {
-        if (HasValue)
-        {
-            yield return _value;
-        }
-    }
-
-    public override string ToString()
-    {
-        return HasValue
-            ? $"Some({_value})"
-            : "None";
+        return Match(Maybe<TOther>.None, onNone);
     }
 
     #endregion
@@ -407,20 +148,19 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         {
             (true, true)   => Equals(_value, other._value),
             (false, false) => true,
-            _              => typeof(T) == typeof(Unit)
+            _              => false
         };
     }
 
     public bool Equals(T? other)
     {
-        return HasValue && Equals(_value, other) || typeof(T) == typeof(Unit);
+        return HasValue && Equals(_value, other);
     }
 
     public override bool Equals(object? obj)
     {
         return obj switch
         {
-            Unit           => !HasValue || typeof(T) == typeof(Unit),
             Maybe<T> maybe => Equals(maybe),
             T value        => Equals(value),
             null           => HasValue && _value is null,
@@ -431,50 +171,6 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
     public override int GetHashCode()
     {
         return HashCode.Combine(HasValue, _value);
-    }
-
-    #endregion
-
-    #region Operators
-
-    public static implicit operator Maybe<T>(T value)
-    {
-        return new Maybe<T>(value);
-    }
-
-    public static implicit operator Maybe<T>(Unit _)
-    {
-        return new Maybe<T>();
-    }
-
-    public static implicit operator Maybe<T?>(Maybe<Unit> maybe)
-    {
-        return maybe.Map(_ => default(T));
-    }
-
-    public static implicit operator Maybe<Unit>(Maybe<T> maybe)
-    {
-        return maybe.Map(_ => Unit.Value);
-    }
-
-    public static implicit operator Maybe<T>(Result<T, Unit> result)
-    {
-        return result.GetValue();
-    }
-
-    public static implicit operator Maybe<T>(Result<Unit, T> result)
-    {
-        return result.GetError();
-    }
-
-    public static implicit operator Result<T, Unit>(Maybe<T> maybe)
-    {
-        return maybe.AsSuccess();
-    }
-
-    public static implicit operator Result<Unit, T>(Maybe<T> maybe)
-    {
-        return maybe.AsFailure();
     }
 
     public static bool operator ==(Maybe<T> left, Maybe<T> right)
@@ -525,6 +221,28 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
     public static bool operator !=(Unit left, Maybe<T> right)
     {
         return right != left;
+    }
+
+
+    #endregion
+
+    #region Conversions
+
+    public override string ToString()
+    {
+        return HasValue
+            ? $"Some({_value})"
+            : "None";
+    }
+
+    public static implicit operator Maybe<T>(T value)
+    {
+        return Some(value);
+    }
+
+    public static implicit operator Maybe<T>(Unit _)
+    {
+        return None();
     }
 
     #endregion
