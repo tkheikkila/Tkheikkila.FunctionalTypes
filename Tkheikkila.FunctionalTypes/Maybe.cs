@@ -45,22 +45,6 @@ public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 		}
 	}
 
-	#region Inspecting state
-
-	public Maybe<T> Filter(Func<T, bool> predicate)
-    {
-		predicate.ThrowIfNull(nameof(predicate));
-
-		return HasValue && predicate(_value)
-            ? Some(_value)
-            : None();
-    }
-
-    public bool Contains(T value)
-        => HasValue && EqualityComparer<T>.Default.Equals(_value, value);
-
-    #endregion
-
     #region Extracting state
 
     public T? GetValueOrDefault()
@@ -186,7 +170,7 @@ public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
     public override string ToString()
         => HasValue
             ? $"Some({_value})"
-            : "None";
+            : "None()";
 
     public static implicit operator Maybe<T>(T value)
         => Some(value);
