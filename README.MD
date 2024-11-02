@@ -30,6 +30,20 @@ This type has two states:
 * `Some` that contains a single value of type `T`
 * `None` that contains no value
 
+## `MaybeResult<TValue, TError>`
+
+A combination of `Maybe<T>` and `Result<TValue, TError>`.
+
+Equivalent to `Maybe<Result<TValue, TError>>`
+
+Resembles `Result<Maybe<TValue>, TError>` and `Result<TValue, Maybe<TError>>`
+
+This type has three states:
+
+* `Ok` that indicates success with a value of type `TValue`
+* `Error` that indicates failure with a value of type `TError`
+* `Neither` that indicates that neither a value of type `TValue` nor a value of type `TError` is present
+
 ## `Unit`
 
 **AKA:** `void`
