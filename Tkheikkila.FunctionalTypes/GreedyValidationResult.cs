@@ -1,4 +1,6 @@
-﻿namespace Tkheikkila.FunctionalTypes;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Tkheikkila.FunctionalTypes;
 
 public sealed class GreedyValidationResult<TValue, TError>
 {
@@ -36,6 +38,17 @@ public sealed class GreedyValidationResult<TValue, TError>
 		{
 			errors(_errors);
 		}
+	}
+
+	public bool TryGetErrors([MaybeNullWhen(false)] out IReadOnlyCollection<TError> errors)
+	{
+		if (IsValid)
+		{
+			errors = default;
+			return false;
+		}
+		errors = [.. _errors];
+		return true;
 	}
 
 	public GreedyValidationResult<TValue, TError> AddError(TError error)
@@ -78,6 +91,15 @@ public sealed class GreedyValidationResult<TValue, TError>
 		validation.ThrowIfNull(nameof(validation));
 
 		return AddErrors(validation(_value)._errors);
+	}
+
+	public GreedyValidationResult<TValue, TError> Validate(Func<TValue, LazyValidationResult<TValue, TError>> validation)
+	{
+		validation.ThrowIfNull(nameof(validation));
+
+		return validation(_value).TryGetError(out var error)
+			? AddError(error)
+			: this;
 	}
 
 	public GreedyValidationResult<TValue, TError> Validate(Func<TValue, Maybe<TError>> validation)
