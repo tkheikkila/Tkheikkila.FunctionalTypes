@@ -4,237 +4,237 @@ namespace Tkheikkila.FunctionalTypes;
 
 public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 {
-	private readonly T _value;
+    private readonly T _value;
 
-	public bool HasValue { get; }
+    public bool HasValue { get; }
 
-	public Maybe(T value)
-	{
-		_value = value;
-		HasValue = true;
-	}
+    public Maybe(T value)
+    {
+        _value = value;
+        HasValue = true;
+    }
 
-	public Maybe()
-	{
-		_value = default!;
-		HasValue = false;
-	}
+    public Maybe()
+    {
+        _value = default!;
+        HasValue = false;
+    }
 
-	public TResult Match<TResult>(Func<T, TResult> onSome, Func<TResult> onNone)
-	{
-		onNone.ThrowIfNull(nameof(onNone));
-		onSome.ThrowIfNull(nameof(onSome));
+    public TResult Match<TResult>(Func<T, TResult> onSome, Func<TResult> onNone)
+    {
+        onNone.ThrowIfNull(nameof(onNone));
+        onSome.ThrowIfNull(nameof(onSome));
 
-		return HasValue
-			? onSome(_value)
-			: onNone();
-	}
+        return HasValue
+            ? onSome(_value)
+            : onNone();
+    }
 
-	public void Match(Action<T> onSome, Action onNone)
-	{
-		onNone.ThrowIfNull(nameof(onNone));
-		onSome.ThrowIfNull(nameof(onSome));
+    public void Match(Action<T> onSome, Action onNone)
+    {
+        onNone.ThrowIfNull(nameof(onNone));
+        onSome.ThrowIfNull(nameof(onSome));
 
-		if (HasValue)
-		{
-			onSome(_value);
-		}
-		else
-		{
-			onNone();
-		}
-	}
+        if (HasValue)
+        {
+            onSome(_value);
+        }
+        else
+        {
+            onNone();
+        }
+    }
 
-	#region Extracting state
+    #region Extracting state
 
-	public T? GetValueOrDefault()
-	{
-		return HasValue
-			? _value
-			: default;
-	}
+    public T? GetValueOrDefault()
+    {
+        return HasValue
+            ? _value
+            : default;
+    }
 
-	[return: NotNullIfNotNull(nameof(defaultValue))]
-	public T? GetValueOrDefault(T? defaultValue)
-	{
-		return HasValue
-			? _value
-			: defaultValue;
-	}
+    [return: NotNullIfNotNull(nameof(defaultValue))]
+    public T? GetValueOrDefault(T? defaultValue)
+    {
+        return HasValue
+            ? _value
+            : defaultValue;
+    }
 
-	public T GetValueOrElse(Func<T> onNone)
-	{
-		onNone.ThrowIfNull(nameof(onNone));
+    public T GetValueOrElse(Func<T> onNone)
+    {
+        onNone.ThrowIfNull(nameof(onNone));
 
-		return HasValue
-			? _value
-			: onNone();
-	}
+        return HasValue
+            ? _value
+            : onNone();
+    }
 
-	public bool TryGetValue([MaybeNullWhen(false)] out T value)
-	{
-		if (HasValue)
-		{
-			value = _value;
-			return true;
-		}
+    public bool TryGetValue([MaybeNullWhen(false)] out T value)
+    {
+        if (HasValue)
+        {
+            value = _value;
+            return true;
+        }
 
-		value = default;
-		return false;
-	}
+        value = default;
+        return false;
+    }
 
-	#endregion
+    #endregion
 
-	#region Map
+    #region Map
 
-	public Maybe<TResult> Map<TResult>(Func<T, TResult> map)
-	{
-		map.ThrowIfNull(nameof(map));
+    public Maybe<TResult> Map<TResult>(Func<T, TResult> map)
+    {
+        map.ThrowIfNull(nameof(map));
 
-		return FlatMap(value => Maybe<TResult>.Some(map(value)));
-	}
+        return FlatMap(value => Maybe<TResult>.Some(map(value)));
+    }
 
-	public TResult? MapOrDefault<TResult>(Func<T, TResult> map)
-	{
-		map.ThrowIfNull(nameof(map));
+    public TResult? MapOrDefault<TResult>(Func<T, TResult> map)
+    {
+        map.ThrowIfNull(nameof(map));
 
-		return MapOrDefault(map, default);
-	}
+        return MapOrDefault(map, default);
+    }
 
-	[return: NotNullIfNotNull(nameof(valueOnNone))]
-	public TResult? MapOrDefault<TResult>(Func<T, TResult> onSome, TResult? valueOnNone)
-	{
-		onSome.ThrowIfNull(nameof(onSome));
+    [return: NotNullIfNotNull(nameof(valueOnNone))]
+    public TResult? MapOrDefault<TResult>(Func<T, TResult> onSome, TResult? valueOnNone)
+    {
+        onSome.ThrowIfNull(nameof(onSome));
 
-		return Match(
-			onSome,
-			() => valueOnNone
-		);
-	}
+        return Match(
+            onSome,
+            () => valueOnNone
+        );
+    }
 
-	#endregion
+    #endregion
 
-	#region FlatMap
+    #region FlatMap
 
-	public Maybe<TOther> FlatMap<TOther>(Func<T, Maybe<TOther>> onSome)
-	{
-		onSome.ThrowIfNull(nameof(onSome));
+    public Maybe<TOther> FlatMap<TOther>(Func<T, Maybe<TOther>> onSome)
+    {
+        onSome.ThrowIfNull(nameof(onSome));
 
-		return Match(onSome, Maybe<TOther>.None);
-	}
+        return Match(onSome, Maybe<TOther>.None);
+    }
 
-	public Maybe<TOther> FlatMapNone<TOther>(Func<Maybe<TOther>> onNone)
-	{
-		onNone.ThrowIfNull(nameof(onNone));
+    public Maybe<TOther> FlatMapNone<TOther>(Func<Maybe<TOther>> onNone)
+    {
+        onNone.ThrowIfNull(nameof(onNone));
 
-		return Match(Maybe<TOther>.None, onNone);
-	}
+        return Match(Maybe<TOther>.None, onNone);
+    }
 
-	#endregion
+    #endregion
 
-	#region Equality
+    #region Equality
 
-	public bool Equals(Maybe<T> other)
-	{
-		return (HasValue, other.HasValue) switch
-		{
-			(true, true) => Equals(_value, other._value),
-			(false, false) => true,
-			_ => false
-		};
-	}
+    public bool Equals(Maybe<T> other)
+    {
+        return (HasValue, other.HasValue) switch
+        {
+            (true, true) => Equals(_value, other._value),
+            (false, false) => true,
+            _ => false
+        };
+    }
 
-	public bool Equals(T? other)
-	{
-		return HasValue && Equals(_value, other);
-	}
+    public bool Equals(T? other)
+    {
+        return HasValue && Equals(_value, other);
+    }
 
-	public override bool Equals(object? obj)
-	{
-		return obj switch
-		{
-			Maybe<T> maybe => Equals(maybe),
-			T value => Equals(value),
-			null => HasValue && _value is null,
-			_ => false
-		};
-	}
+    public override bool Equals(object? obj)
+    {
+        return obj switch
+        {
+            Maybe<T> maybe => Equals(maybe),
+            T value => Equals(value),
+            null => HasValue && _value is null,
+            _ => false
+        };
+    }
 
-	public override int GetHashCode()
-	{
-		return HashCode.Combine(HasValue, _value);
-	}
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(HasValue, _value);
+    }
 
-	public static bool operator ==(Maybe<T> left, Maybe<T> right)
-	{
-		return left.Equals(right);
-	}
+    public static bool operator ==(Maybe<T> left, Maybe<T> right)
+    {
+        return left.Equals(right);
+    }
 
-	public static bool operator !=(Maybe<T> left, Maybe<T> right)
-	{
-		return !left.Equals(right);
-	}
+    public static bool operator !=(Maybe<T> left, Maybe<T> right)
+    {
+        return !left.Equals(right);
+    }
 
-	public static bool operator ==(Maybe<T> left, T right)
-	{
-		return left.Equals(right);
-	}
+    public static bool operator ==(Maybe<T> left, T right)
+    {
+        return left.Equals(right);
+    }
 
-	public static bool operator !=(Maybe<T> left, T right)
-	{
-		return !left.Equals(right);
-	}
+    public static bool operator !=(Maybe<T> left, T right)
+    {
+        return !left.Equals(right);
+    }
 
-	public static bool operator ==(T left, Maybe<T> right)
-	{
-		return right.Equals(left);
-	}
+    public static bool operator ==(T left, Maybe<T> right)
+    {
+        return right.Equals(left);
+    }
 
-	public static bool operator !=(T left, Maybe<T> right)
-	{
-		return !right.Equals(left);
-	}
+    public static bool operator !=(T left, Maybe<T> right)
+    {
+        return !right.Equals(left);
+    }
 
-	public static bool operator ==(Maybe<T> left, Unit right)
-	{
-		return left.Equals(right);
-	}
+    public static bool operator ==(Maybe<T> left, Unit right)
+    {
+        return left.Equals(right);
+    }
 
-	public static bool operator !=(Maybe<T> left, Unit right)
-	{
-		return !(left == right);
-	}
+    public static bool operator !=(Maybe<T> left, Unit right)
+    {
+        return !(left == right);
+    }
 
-	public static bool operator ==(Unit left, Maybe<T> right)
-	{
-		return right == left;
-	}
+    public static bool operator ==(Unit left, Maybe<T> right)
+    {
+        return right == left;
+    }
 
-	public static bool operator !=(Unit left, Maybe<T> right)
-	{
-		return right != left;
-	}
+    public static bool operator !=(Unit left, Maybe<T> right)
+    {
+        return right != left;
+    }
 
-	#endregion
+    #endregion
 
-	#region Conversions
+    #region Conversions
 
-	public override string ToString()
-	{
-		return HasValue
-			? $"Some({_value})"
-			: "None()";
-	}
+    public override string ToString()
+    {
+        return HasValue
+            ? $"Some({_value})"
+            : "None()";
+    }
 
-	public static implicit operator Maybe<T>(T value)
-	{
-		return Some(value);
-	}
+    public static implicit operator Maybe<T>(T value)
+    {
+        return Some(value);
+    }
 
-	public static implicit operator Maybe<T>(Unit _)
-	{
-		return None();
-	}
+    public static implicit operator Maybe<T>(Unit _)
+    {
+        return None();
+    }
 
-	#endregion
+    #endregion
 }
