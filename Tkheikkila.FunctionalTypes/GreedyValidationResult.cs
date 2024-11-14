@@ -1,6 +1,6 @@
 ﻿namespace Tkheikkila.FunctionalTypes;
 
-public sealed partial class GreedyValidationResult<TValue, TError>
+public sealed class GreedyValidationResult<TValue, TError>
 {
 	public bool IsValid { get; }
 	public TValue Value { get; }
