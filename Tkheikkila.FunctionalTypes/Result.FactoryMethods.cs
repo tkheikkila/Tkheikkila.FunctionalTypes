@@ -1,44 +1,17 @@
-﻿namespace Tkheikkila.FunctionalTypes;
+﻿using System.Diagnostics.CodeAnalysis;
 
-public static class Result
+namespace Tkheikkila.FunctionalTypes;
+
+[SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "Required for Result<TValue, TError> implementation")]
+public sealed partial class Result<TValue, TError>
 {
-    public static Result<TValue, TError> Success<TValue, TError>(TValue value)
+    public static Result<TValue, TError> Ok(TValue value)
     {
-        return new Result<TValue, TError>(value);
+        return new Result<TValue, TError>(true, value, default!);
     }
 
-    public static Result<TError> Success<TError>()
+    public static Result<TValue, TError> Error(TError error)
     {
-        return new Result<TError>();
-    }
-
-    public static Task<Result<TValue, TError>> SuccessTask<TValue, TError>(TValue value)
-    {
-        return Task.FromResult(Success<TValue, TError>(value));
-    }
-
-    public static Task<Result<TError>> SuccessTask<TError>()
-    {
-        return Task.FromResult(Success<TError>());
-    }
-
-    public static Result<TValue, TError> Failure<TValue, TError>(TError error)
-    {
-        return new Result<TValue, TError>(error);
-    }
-
-    public static Result<TError> Failure<TError>(TError error)
-    {
-        return new Result<TError>(error);
-    }
-
-    public static Task<Result<TValue, TError>> FailureTask<TValue, TError>(TError error)
-    {
-        return Task.FromResult(Failure<TValue, TError>(error));
-    }
-
-    public static Task<Result<TError>> FailureTask<TError>(TError error)
-    {
-        return Task.FromResult(Failure(error));
+        return new Result<TValue, TError>(false, default!, error);
     }
 }

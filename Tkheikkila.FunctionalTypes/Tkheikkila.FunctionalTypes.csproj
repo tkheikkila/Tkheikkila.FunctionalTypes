@@ -16,6 +16,8 @@
         <AnalysisLevel>latest-recommended</AnalysisLevel>
         <PackageProjectUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes</PackageProjectUrl>
         <RepositoryUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes.git</RepositoryUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
@@ -28,6 +30,10 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
     </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 
   <PropertyGroup>
     <MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
