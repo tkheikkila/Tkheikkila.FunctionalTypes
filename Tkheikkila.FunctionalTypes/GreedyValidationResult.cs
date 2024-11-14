@@ -3,14 +3,14 @@
 public sealed class GreedyValidationResult<TValue, TError>
 {
 	public bool IsValid { get; }
-	public TValue Value { get; }
-	public IReadOnlyList<TError> Errors { get; }
+	private readonly TValue _value;
+	private readonly IReadOnlyList<TError> _errors;
 
 	internal GreedyValidationResult(bool isValid, TValue value, IEnumerable<TError> errors)
 	{
 		IsValid = isValid;
-		Value = value;
-		Errors = errors.ToArray();
+		_value = value;
+		_errors = errors.ToArray();
 	}
 
 	public TResult Match<TResult>(Func<TValue, TResult> ok, Func<IReadOnlyList<TError>, TResult> errors)
@@ -19,8 +19,8 @@ public sealed class GreedyValidationResult<TValue, TError>
 		errors.ThrowIfNull(nameof(errors));
 
 		return IsValid
-			? ok(Value)
-			: errors(Errors);
+			? ok(_value)
+			: errors(_errors);
 	}
 
 	public void Match(Action<TValue> ok, Action<IReadOnlyList<TError>> errors)
@@ -30,11 +30,11 @@ public sealed class GreedyValidationResult<TValue, TError>
 
 		if (IsValid)
 		{
-			ok(Value);
+			ok(_value);
 		}
 		else
 		{
-			errors(Errors);
+			errors(_errors);
 		}
 	}
 
@@ -42,7 +42,7 @@ public sealed class GreedyValidationResult<TValue, TError>
 	{
 		error.ThrowIfNull(nameof(error));
 
-		return new GreedyValidationResult<TValue, TError>(false, Value, Errors.Append(error));
+		return new GreedyValidationResult<TValue, TError>(false, _value, _errors.Append(error));
 	}
 
 	public GreedyValidationResult<TValue, TError> AddErrors(IEnumerable<TError> errors)
@@ -52,7 +52,7 @@ public sealed class GreedyValidationResult<TValue, TError>
 		errors.ThrowIfAnyNull(nameof(errors));
 
 		return errors.ToArray() is { Length: > 0 } newErrors
-			? new GreedyValidationResult<TValue, TError>(false, Value, Errors.Concat(newErrors))
+			? new GreedyValidationResult<TValue, TError>(false, _value, _errors.Concat(newErrors))
 			: this;
 	}
 
@@ -62,7 +62,7 @@ public sealed class GreedyValidationResult<TValue, TError>
 		errors.ThrowIfAnyNull(nameof(errors));
 
 		return errors.Length > 0
-			? new GreedyValidationResult<TValue, TError>(false, Value, Errors.Concat(errors))
+			? new GreedyValidationResult<TValue, TError>(false, _value, _errors.Concat(errors))
 			: this;
 	}
 
@@ -70,21 +70,21 @@ public sealed class GreedyValidationResult<TValue, TError>
 	{
 		errors.ThrowIfNull(nameof(errors));
 
-		return AddErrors(errors(Value));
+		return AddErrors(errors(_value));
 	}
 
 	public GreedyValidationResult<TValue, TError> Validate(Func<TValue, GreedyValidationResult<TValue, TError>> validation)
 	{
 		validation.ThrowIfNull(nameof(validation));
 
-		return AddErrors(validation(Value).Errors);
+		return AddErrors(validation(_value)._errors);
 	}
 
 	public GreedyValidationResult<TValue, TError> Validate(Func<TValue, Maybe<TError>> validation)
 	{
 		validation.ThrowIfNull(nameof(validation));
 
-		return validation(Value)
+		return validation(_value)
 			.MapOrDefault(AddError, this);
 	}
 
@@ -92,7 +92,7 @@ public sealed class GreedyValidationResult<TValue, TError>
 	{
 		validation.ThrowIfNull(nameof(validation));
 
-		return validation(Value)
+		return validation(_value)
 			.MapErrorOrDefault(AddError, this);
 	}
 }

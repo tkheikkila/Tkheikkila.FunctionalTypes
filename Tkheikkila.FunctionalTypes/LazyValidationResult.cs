@@ -5,13 +5,13 @@ namespace Tkheikkila.FunctionalTypes;
 public sealed class LazyValidationResult<TValue, TError>
 {
 	public bool IsValid { get; }
-	public TValue Value { get; }
+	private readonly TValue _value;
 	private readonly TError _error;
 
 	internal LazyValidationResult(bool isValid, TValue value, TError error)
 	{
 		IsValid = isValid;
-		Value = value;
+		_value = value;
 		_error = error;
 	}
 
@@ -21,7 +21,7 @@ public sealed class LazyValidationResult<TValue, TError>
 		errors.ThrowIfNull(nameof(errors));
 
 		return IsValid
-			? ok(Value)
+			? ok(_value)
 			: errors(_error);
 	}
 
@@ -32,7 +32,7 @@ public sealed class LazyValidationResult<TValue, TError>
 
 		if (IsValid)
 		{
-			ok(Value);
+			ok(_value);
 		}
 		else
 		{
@@ -56,7 +56,7 @@ public sealed class LazyValidationResult<TValue, TError>
 	{
 		validation.ThrowIfNull(nameof(validation));
 
-		if (IsValid && validation(Value).FirstOrDefault() is { } error)
+		if (IsValid && validation(_value).FirstOrDefault() is { } error)
 		{
 			return Error(error);
 		}
@@ -69,7 +69,7 @@ public sealed class LazyValidationResult<TValue, TError>
 		validation.ThrowIfNull(nameof(validation));
 
 		return IsValid
-			? validation(Value)
+			? validation(_value)
 			: this;
 	}
 
@@ -78,7 +78,7 @@ public sealed class LazyValidationResult<TValue, TError>
 		validation.ThrowIfNull(nameof(validation));
 
 		return IsValid
-			? validation(Value).MapOrDefault(Error, this)
+			? validation(_value).MapOrDefault(Error, this)
 			: this;
 	}
 
@@ -87,7 +87,7 @@ public sealed class LazyValidationResult<TValue, TError>
 		validation.ThrowIfNull(nameof(validation));
 
 		return IsValid
-			? validation(Value).MapErrorOrDefault(Error, this)
+			? validation(_value).MapErrorOrDefault(Error, this)
 			: this;
 	}
 
