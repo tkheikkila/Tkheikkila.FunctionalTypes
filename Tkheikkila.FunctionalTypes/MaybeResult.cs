@@ -9,7 +9,9 @@ public readonly partial struct MaybeResult<TValue, TError> : IEquatable<MaybeRes
 	private readonly TError _error;
 
 	public bool HasValue => _hasValue is true;
+
 	public bool HasError => _hasValue is false;
+
 	public bool HasNeither => _hasValue is null;
 
 	private MaybeResult(bool? hasValue, TValue value, TError error)
@@ -82,14 +84,18 @@ public readonly partial struct MaybeResult<TValue, TError> : IEquatable<MaybeRes
 	}
 
 	public Maybe<TValue> GetValue()
-		=> HasValue
+	{
+		return HasValue
 			? _value
 			: default!;
+	}
 
 	public Maybe<TError> GetError()
-		=> HasError
+	{
+		return HasError
 			? _error
 			: default!;
+	}
 
 	#endregion Extracting state
 
@@ -103,11 +109,15 @@ public readonly partial struct MaybeResult<TValue, TError> : IEquatable<MaybeRes
 	}
 
 	public TResult? MapOrDefault<TResult>(Func<TValue, TResult> map)
-		=> MapOrDefault(map, default);
+	{
+		return MapOrDefault(map, default);
+	}
 
 	[return: NotNullIfNotNull(nameof(defaultValue))]
 	public TResult? MapOrDefault<TResult>(Func<TValue, TResult> onSome, TResult? defaultValue)
-		=> Match(onSome, _ => defaultValue, () => defaultValue);
+	{
+		return Match(onSome, _ => defaultValue, () => defaultValue);
+	}
 
 	#endregion Map
 
@@ -147,66 +157,99 @@ public readonly partial struct MaybeResult<TValue, TError> : IEquatable<MaybeRes
 	#region Equality
 
 	public bool Equals(MaybeResult<TValue, TError> other)
-		=> _hasValue == other._hasValue
-		&& EqualityComparer<TValue>.Default.Equals(_value, other._value)
-		&& EqualityComparer<TError>.Default.Equals(_error, other._error);
+	{
+		return _hasValue == other._hasValue
+			   && EqualityComparer<TValue>.Default.Equals(_value, other._value)
+			   && EqualityComparer<TError>.Default.Equals(_error, other._error);
+	}
 
 	public override bool Equals(object? obj)
-		=> obj is MaybeResult<TValue, TError> other && Equals(other);
+	{
+		return obj is MaybeResult<TValue, TError> other && Equals(other);
+	}
 
 	public override int GetHashCode()
-		=> HashCode.Combine(_hasValue, _value, _error);
+	{
+		return HashCode.Combine(_hasValue, _value, _error);
+	}
 
 	public static bool operator ==(MaybeResult<TValue, TError> left, MaybeResult<TValue, TError> right)
-		=> left.Equals(right);
+	{
+		return left.Equals(right);
+	}
 
 	public static bool operator !=(MaybeResult<TValue, TError> left, MaybeResult<TValue, TError> right)
-		=> !left.Equals(right);
-
+	{
+		return !left.Equals(right);
+	}
 
 	#endregion Equality
 
 	#region Conversions
 
 	public override string ToString()
-		=> Match(
+	{
+		return Match(
 			static ok => $"Ok({ok})",
 			static error => $"Error({error})",
 			static () => "Neither()"
 		);
+	}
 
 	public static implicit operator MaybeResult<TValue, TError>(TValue value)
-		=> Ok(value);
+	{
+		return Ok(value);
+	}
 
 	public static implicit operator MaybeResult<TValue, TError>(TError error)
-		=> Error(error);
+	{
+		return Error(error);
+	}
 
 	public static implicit operator MaybeResult<TValue, TError>(Maybe<TValue> maybe)
-		=> Ok(maybe);
+	{
+		return Ok(maybe);
+	}
 
 	public static implicit operator MaybeResult<TValue, TError>(Maybe<TError> maybe)
-		=> Error(maybe);
+	{
+		return Error(maybe);
+	}
 
 	public static implicit operator MaybeResult<TValue, TError>(Result<TValue, TError> result)
-		=> FromResult(result);
+	{
+		return FromResult(result);
+	}
 
 	public static implicit operator MaybeResult<TValue, TError>(Maybe<Result<TValue, TError>> result)
-		=> result.Match(FromResult, Neither);
+	{
+		return result.Match(FromResult, Neither);
+	}
 
 	public static implicit operator MaybeResult<TValue, TError>(Result<Maybe<TValue>, TError> result)
-		=> result.Match(Ok, Error);
+	{
+		return result.Match(Ok, Error);
+	}
 
 	public static implicit operator MaybeResult<TValue, TError>(Result<TValue, Maybe<TError>> result)
-		=> result.Match(Ok, Error);
+	{
+		return result.Match(Ok, Error);
+	}
 
 	public static explicit operator MaybeResult<TValue, TError>(Result<Maybe<TError>, Maybe<TValue>> result)
-		=> result.Match(Error, Ok);
+	{
+		return result.Match(Error, Ok);
+	}
 
 	public static explicit operator MaybeResult<TValue, TError>(MaybeResult<TError, TValue> result)
-		=> result.Match(Error, Ok, Neither);
+	{
+		return result.Match(Error, Ok, Neither);
+	}
 
 	public static explicit operator MaybeResult<TValue, TError>(Result<Maybe<TValue>, Maybe<TError>> result)
-		=> result.Match(Ok, Error);
+	{
+		return result.Match(Ok, Error);
+	}
 
 	#endregion Conversions
 }
