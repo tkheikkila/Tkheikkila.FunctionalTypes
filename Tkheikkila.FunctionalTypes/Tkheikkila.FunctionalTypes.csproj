@@ -17,6 +17,7 @@
         <PackageProjectUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes</PackageProjectUrl>
         <RepositoryUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes.git</RepositoryUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
