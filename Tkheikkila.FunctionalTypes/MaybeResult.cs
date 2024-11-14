@@ -110,12 +110,16 @@ public readonly partial struct MaybeResult<TValue, TError> : IEquatable<MaybeRes
 
 	public TResult? MapOrDefault<TResult>(Func<TValue, TResult> map)
 	{
+		map.ThrowIfNull(nameof(map));
+
 		return MapOrDefault(map, default);
 	}
 
 	[return: NotNullIfNotNull(nameof(defaultValue))]
 	public TResult? MapOrDefault<TResult>(Func<TValue, TResult> onSome, TResult? defaultValue)
 	{
+		onSome.ThrowIfNull(nameof(onSome));
+
 		return Match(onSome, _ => defaultValue, () => defaultValue);
 	}
 

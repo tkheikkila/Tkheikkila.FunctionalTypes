@@ -24,6 +24,8 @@ public readonly partial struct Maybe<T>
 
 	public static Maybe<T> SomeOrNone(T value, Func<T, bool> when)
 	{
+		when.ThrowIfNull(nameof(when));
+
 		return SomeOrNone(value, when(value));
 	}
 

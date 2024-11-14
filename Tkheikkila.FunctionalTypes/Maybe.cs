@@ -89,17 +89,23 @@ public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
 	public Maybe<TResult> Map<TResult>(Func<T, TResult> map)
 	{
+		map.ThrowIfNull(nameof(map));
+
 		return FlatMap(value => Maybe<TResult>.Some(map(value)));
 	}
 
 	public TResult? MapOrDefault<TResult>(Func<T, TResult> map)
 	{
+		map.ThrowIfNull(nameof(map));
+
 		return MapOrDefault(map, default);
 	}
 
 	[return: NotNullIfNotNull(nameof(valueOnNone))]
 	public TResult? MapOrDefault<TResult>(Func<T, TResult> onSome, TResult? valueOnNone)
 	{
+		onSome.ThrowIfNull(nameof(onSome));
+
 		return Match(
 			onSome,
 			() => valueOnNone
@@ -112,11 +118,15 @@ public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
 
 	public Maybe<TOther> FlatMap<TOther>(Func<T, Maybe<TOther>> onSome)
 	{
+		onSome.ThrowIfNull(nameof(onSome));
+
 		return Match(onSome, Maybe<TOther>.None);
 	}
 
 	public Maybe<TOther> FlatMapNone<TOther>(Func<Maybe<TOther>> onNone)
 	{
+		onNone.ThrowIfNull(nameof(onNone));
+
 		return Match(Maybe<TOther>.None, onNone);
 	}
 

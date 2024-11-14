@@ -151,6 +151,8 @@ public sealed partial class Result<TValue, TError> : IEquatable<Result<TValue, T
 
 	public TResult? MapErrorOrDefault<TResult>(Func<TError, TResult> map)
 	{
+		map.ThrowIfNull(nameof(map));
+
 		return MapErrorOrDefault(map, default);
 	}
 
@@ -170,21 +172,31 @@ public sealed partial class Result<TValue, TError> : IEquatable<Result<TValue, T
 
 	public Result<TOther, TError> FlatMap<TOther>(Func<TValue, Result<TOther, TError>> map)
 	{
+		map.ThrowIfNull(nameof(map));
+
 		return Match(ok: map, error: Result<TOther, TError>.Error);
 	}
 
 	public Result<TOther, TError> FlatMap<TIntermediate, TOther>(Func<TValue, Result<TIntermediate, TError>> map, Func<TValue, TIntermediate, TOther> flatMap)
 	{
+		map.ThrowIfNull(nameof(map));
+		flatMap.ThrowIfNull(nameof(flatMap));
+
 		return FlatMap(value => map(value).Map(other => flatMap(value, other)));
 	}
 
 	public Result<TValue, TOther> FlatMapError<TOther>(Func<TError, Result<TValue, TOther>> map)
 	{
+		map.ThrowIfNull(nameof(map));
+
 		return Match(ok: Result<TValue, TOther>.Ok, error: map);
 	}
 
 	public Result<TValue, TOther> FlatMapError<TIntermediate, TOther>(Func<TError, Result<TValue, TIntermediate>> map, Func<TError, TIntermediate, TOther> flatMap)
 	{
+		map.ThrowIfNull(nameof(map));
+		flatMap.ThrowIfNull(nameof(flatMap));
+
 		return FlatMapError(error => map(error).MapError(other => flatMap(error, other)));
 	}
 

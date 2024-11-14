@@ -25,10 +25,10 @@ public sealed class LazyValidationResult<TValue, TError>
 			: errors(_error);
 	}
 
-	public void Match(Action<TValue> ok, Action<TError> errors)
+	public void Match(Action<TValue> ok, Action<TError> error)
 	{
 		ok.ThrowIfNull(nameof(ok));
-		errors.ThrowIfNull(nameof(errors));
+		error.ThrowIfNull(nameof(error));
 
 		if (IsValid)
 		{
@@ -36,7 +36,7 @@ public sealed class LazyValidationResult<TValue, TError>
 		}
 		else
 		{
-			errors(_error);
+			error(_error);
 		}
 	}
 
@@ -54,6 +54,8 @@ public sealed class LazyValidationResult<TValue, TError>
 
 	public LazyValidationResult<TValue, TError> Validate(Func<TValue, IEnumerable<TError>> validation)
 	{
+		validation.ThrowIfNull(nameof(validation));
+
 		if (IsValid && validation(Value).FirstOrDefault() is { } error)
 		{
 			return Error(error);
@@ -64,6 +66,8 @@ public sealed class LazyValidationResult<TValue, TError>
 
 	public LazyValidationResult<TValue, TError> Validate(Func<TValue, LazyValidationResult<TValue, TError>> validation)
 	{
+		validation.ThrowIfNull(nameof(validation));
+
 		return IsValid
 			? validation(Value)
 			: this;
@@ -71,6 +75,8 @@ public sealed class LazyValidationResult<TValue, TError>
 
 	public LazyValidationResult<TValue, TError> Validate(Func<TValue, Maybe<TError>> validation)
 	{
+		validation.ThrowIfNull(nameof(validation));
+
 		return IsValid
 			? validation(Value).MapOrDefault(Error, this)
 			: this;
@@ -78,6 +84,8 @@ public sealed class LazyValidationResult<TValue, TError>
 
 	public LazyValidationResult<TValue, TError> Validate(Func<TValue, Result<TValue, TError>> validation)
 	{
+		validation.ThrowIfNull(nameof(validation));
+
 		return IsValid
 			? validation(Value).MapErrorOrDefault(Error, this)
 			: this;

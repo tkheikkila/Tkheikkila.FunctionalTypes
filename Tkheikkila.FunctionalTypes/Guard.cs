@@ -6,7 +6,15 @@ internal static class Guard
 	{
 		if (value == null)
 		{
-			throw new ArgumentNullException(name);
+			throw new ArgumentNullException(paramName: name, message: null);
+		}
+	}
+
+	public static void ThrowIfAnyNull<T>(this IEnumerable<T> value, string name)
+	{
+		if (value.Any(x => x == null))
+		{
+			throw new ArgumentException(paramName: name, message: null);
 		}
 	}
 }
