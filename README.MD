@@ -29,7 +29,7 @@ This type has two states:
 
 ## `Result<TValue, TError>`
 
-**AKA:** `Either`
+**AKA:** `Either`, `OneOf`
 
 A value that can be in one of two states, but never both.
 
@@ -56,6 +56,25 @@ This type has three states:
   Created by calling `MaybeResult<TValue, TError>.Error(error)`.
 * `Neither` that indicates that neither a value of type `TValue` nor a value of type `TError` is present
   Created by calling `MaybeResult<TValue, TError>.Neither()`.
+
+## `Outcome<TValue, TWarning, TError>`
+
+**AKA:** `OneOf`
+
+A value that can be in one of three states, but never more than one.
+
+Resembles `Result<TValue, TError>` with an additional state for warnings and/or results that could not be determined to be either success or failure.
+
+Resembles `MaybeResult<TValue, TError>` that has had it's Neither state replaced by a Warning state.
+
+These states are:
+
+* `Ok` that indicates success with a value of type `TValue`  
+  Created by calling `Outcome<TValue, TWarning, TError>.Ok(value)`.
+* `Warning` that indicates either a warning or some other undeterministic result with a value of type `TWarning`  
+  Created by calling `Outcome<TValue, TWarning, TError>.Warning(warning)`.
+* `Error` that indicates failure with a value of type `TError`  
+  Created by calling `Outcome<TValue, TWarning, TError>.Error(error)`
 
 ## `GreedyValidationResult<TValue, TError>`
 
