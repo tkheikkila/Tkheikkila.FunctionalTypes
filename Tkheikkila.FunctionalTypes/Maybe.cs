@@ -123,6 +123,14 @@ public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         return Match(onSome, Maybe<TOther>.None);
     }
 
+    public Maybe<TOther> FlatMap<TIntermediate, TOther>(Func<T, Maybe<TIntermediate>> onSome, Func<T, TIntermediate, Maybe<TOther>> map)
+    {
+        onSome.ThrowIfNull(nameof(onSome));
+        map.ThrowIfNull(nameof(map));
+
+        return FlatMap(value => onSome(value).FlatMap(intermediate => map(value, intermediate)));
+    }
+
     public Maybe<TOther> FlatMapNone<TOther>(Func<Maybe<TOther>> onNone)
     {
         onNone.ThrowIfNull(nameof(onNone));
