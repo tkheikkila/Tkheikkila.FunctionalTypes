@@ -1,35 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <PackageId>Tkheikkila.FunctionalTypes</PackageId>
-        <Authors>Toni Heikkilä</Authors>
-        <Description>Useful types missing from C#</Description>
-        <Copyright>Copyright (c) Toni Heikkilä</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageTags>maybe;option;optional;result;either;unit;monads</PackageTags>
-        <Nullable>enable</Nullable>
-        <Features>strict</Features>
-        <LangVersion>latest</LangVersion>
-        <ImplicitUsings>true</ImplicitUsings>
-        <Deterministic>true</Deterministic>
-        <EnableNETAnalyzers>True</EnableNETAnalyzers>
-        <AnalysisLevel>latest-recommended</AnalysisLevel>
-        <PackageProjectUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes.git</RepositoryUrl>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
+    <PackageId>Tkheikkila.FunctionalTypes</PackageId>
+    <Authors>Toni Heikkilä</Authors>
+    <Description>Useful types missing from C#</Description>
+    <Copyright>Copyright (c) Toni Heikkilä</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>maybe;option;optional;result;either;unit;monads</PackageTags>
+    <Nullable>enable</Nullable>
+    <Features>strict</Features>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>true</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <PackageProjectUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tkheikkila/Tkheikkila.FunctionalTypes.git</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <PackageReference Include="MinVer" Version="4.3.0">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="SonarAnalyzer.CSharp" Version="9.2.0.71021">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-    </ItemGroup>
+  <PropertyGroup Condition="$(TargetFramework) == 'net8.0'">
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <PublishTrimmed>true</PublishTrimmed>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="4.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework) != 'net8.0'">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.2.0.71021">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="/" />
