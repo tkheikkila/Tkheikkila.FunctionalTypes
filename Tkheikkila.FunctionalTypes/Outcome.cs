@@ -28,31 +28,31 @@ public sealed partial class Outcome<TValue, TWarning, TError> : IEquatable<Outco
         _value = discriminator == Discriminator.Value ? value : default!;
     }
 
-    public TResult Match<TResult>(Func<TValue, TResult> value, Func<TWarning, TResult> warning, Func<TError, TResult> error)
+    public TResult Match<TResult>(Func<TValue, TResult> ok, Func<TWarning, TResult> warning, Func<TError, TResult> error)
     {
-        value.ThrowIfNull(nameof(value));
+        ok.ThrowIfNull(nameof(ok));
         warning.ThrowIfNull(nameof(warning));
         error.ThrowIfNull(nameof(error));
 
         return _discriminator switch
         {
-            Discriminator.Value => value(_value),
+            Discriminator.Value => ok(_value),
             Discriminator.Warning => warning(_warning),
             Discriminator.Error => error(_error),
             _ => throw new InvalidOperationException("Invalid state") // Unreachable without shenanigans
         };
     }
 
-    public void Match(Action<TValue> value, Action<TWarning> warning, Action<TError> error)
+    public void Match(Action<TValue> ok, Action<TWarning> warning, Action<TError> error)
     {
-        value.ThrowIfNull(nameof(value));
+        ok.ThrowIfNull(nameof(ok));
         warning.ThrowIfNull(nameof(warning));
         error.ThrowIfNull(nameof(error));
 
         switch (_discriminator)
         {
             case Discriminator.Value:
-                value(_value);
+                ok(_value);
                 break;
             case Discriminator.Warning:
                 warning(_warning);
@@ -110,9 +110,9 @@ public sealed partial class Outcome<TValue, TWarning, TError> : IEquatable<Outco
         return HasWarning ? _warning : defaultValue;
     }
 
-    public TWarning GetWarningOrElse(Func<TValue, TWarning> value, Func<TError, TWarning> error)
+    public TWarning GetWarningOrElse(Func<TValue, TWarning> ok, Func<TError, TWarning> error)
     {
-        return Match(value, static warning => warning, error);
+        return Match(ok, static warning => warning, error);
     }
 
     public bool TryGetWarning([MaybeNullWhen(false)] out TWarning warning)
@@ -142,9 +142,9 @@ public sealed partial class Outcome<TValue, TWarning, TError> : IEquatable<Outco
         return HasError ? _error : defaultValue;
     }
 
-    public TError GetErrorOrElse(Func<TValue, TError> value, Func<TWarning, TError> warning)
+    public TError GetErrorOrElse(Func<TValue, TError> ok, Func<TWarning, TError> warning)
     {
-        return Match(value, warning, static error => error);
+        return Match(ok, warning, static error => error);
     }
 
     public bool TryGetError([MaybeNullWhen(false)] out TError error)
