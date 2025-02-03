@@ -42,6 +42,30 @@ public sealed partial class Result<TValue, TError> : IEquatable<Result<TValue, T
         }
     }
 
+    public Result<TValue, TError> Peek(Action<TValue> ok)
+    {
+        ok.ThrowIfNull(nameof(ok));
+
+        if (HasValue)
+        {
+            ok(_value);
+        }
+
+        return this;
+    }
+
+    public Result<TValue, TError> PeekError(Action<TError> error)
+    {
+        error.ThrowIfNull(nameof(error));
+
+        if (HasError)
+        {
+            error(_error);
+        }
+
+        return this;
+    }
+
     #region Extracting state
 
     public TError? GetErrorOrDefault()

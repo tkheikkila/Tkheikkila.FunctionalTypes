@@ -65,6 +65,42 @@ public sealed partial class Outcome<TValue, TWarning, TError> : IEquatable<Outco
         }
     }
 
+    public Outcome<TValue, TWarning, TError> Peek(Action<TValue> ok)
+    {
+        ok.ThrowIfNull(nameof(ok));
+
+        if (HasValue)
+        {
+            ok(_value);
+        }
+
+        return this;
+    }
+
+    public Outcome<TValue, TWarning, TError> PeekWarning(Action<TWarning> warning)
+    {
+        warning.ThrowIfNull(nameof(warning));
+
+        if (HasWarning)
+        {
+            warning(_warning);
+        }
+
+        return this;
+    }
+
+    public Outcome<TValue, TWarning, TError> PeekError(Action<TError> error)
+    {
+        error.ThrowIfNull(nameof(error));
+
+        if (HasError)
+        {
+            error(_error);
+        }
+
+        return this;
+    }
+
     #region Extracting state
 
     public TValue? GetValueOrDefault()

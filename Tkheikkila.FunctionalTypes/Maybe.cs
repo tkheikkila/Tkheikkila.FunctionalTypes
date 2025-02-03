@@ -45,6 +45,30 @@ public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<T>
         }
     }
 
+    public Maybe<T> Peek(Action<T> onSome)
+    {
+        onSome.ThrowIfNull(nameof(onSome));
+
+        if (HasValue)
+        {
+            onSome(_value);
+        }
+
+        return this;
+    }
+
+    public Maybe<T> PeekNone(Action onNone)
+    {
+        onNone.ThrowIfNull(nameof(onNone));
+
+        if (!HasValue)
+        {
+            onNone();
+        }
+
+        return this;
+    }
+
     #region Extracting state
 
     public T? GetValueOrDefault()

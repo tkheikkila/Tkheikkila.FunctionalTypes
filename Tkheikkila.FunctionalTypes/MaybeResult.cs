@@ -57,6 +57,42 @@ public readonly partial struct MaybeResult<TValue, TError> : IEquatable<MaybeRes
         }
     }
 
+    public MaybeResult<TValue, TError> Peek(Action<TValue> onSome)
+    {
+        onSome.ThrowIfNull(nameof(onSome));
+
+        if (HasValue)
+        {
+            onSome(_value);
+        }
+
+        return this;
+    }
+
+    public MaybeResult<TValue, TError> PeekError(Action<TError> onError)
+    {
+        onError.ThrowIfNull(nameof(onError));
+
+        if (HasError)
+        {
+            onError(_error);
+        }
+
+        return this;
+    }
+
+    public MaybeResult<TValue, TError> PeekNeither(Action onNeither)
+    {
+        onNeither.ThrowIfNull(nameof(onNeither));
+
+        if (HasNeither)
+        {
+            onNeither();
+        }
+
+        return this;
+    }
+
     #region Extracting state
 
     public bool TryGetValue([MaybeNullWhen(false)] out TValue value)
