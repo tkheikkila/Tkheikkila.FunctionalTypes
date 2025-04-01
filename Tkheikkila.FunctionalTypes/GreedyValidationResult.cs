@@ -12,7 +12,7 @@ public sealed class GreedyValidationResult<TValue, TError>
     {
         IsValid = isValid;
         _value = value;
-        _errors = errors.ToArray();
+        _errors = [..errors];
     }
 
     public TResult Match<TResult>(Func<TValue, TResult> ok, Func<IReadOnlyList<TError>, TResult> errors)
