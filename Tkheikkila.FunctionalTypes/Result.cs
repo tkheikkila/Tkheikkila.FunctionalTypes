@@ -140,6 +140,20 @@ public sealed partial class Result<TValue, TError> : IEquatable<Result<TValue, T
         return Match(Maybe<TError>.None, Maybe<TError>.Some);
     }
 
+    public bool TryUnwrap([MaybeNullWhen(false)] out TValue value, [MaybeNullWhen(true)] out TError error)
+    {
+        if (HasValue)
+        {
+            value = _value;
+            error = default;
+            return true;
+        }
+
+        value = default;
+        error = _error;
+        return false;
+    }
+
     #endregion
 
     #region Map

@@ -133,6 +133,26 @@ public readonly partial struct MaybeResult<TValue, TError> : IEquatable<MaybeRes
             : default!;
     }
 
+    public Maybe<bool> TryUnwrap([NotNullWhen(true)] out TValue? value, [NotNullWhen(false)] out TError? error)
+    {
+        if (HasValue)
+        {
+            value = _value!;
+            error = default;
+            return true;
+        }
+        if (HasError)
+        {
+            value = default;
+            error = _error!;
+            return false;
+        }
+
+        value = default!;
+        error = default!;
+        return default;
+    }
+
     #endregion Extracting state
 
     #region Map
