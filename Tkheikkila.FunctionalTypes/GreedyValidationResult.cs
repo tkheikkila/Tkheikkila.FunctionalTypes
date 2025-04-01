@@ -44,7 +44,7 @@ public sealed class GreedyValidationResult<TValue, TError>
     {
         if (IsValid)
         {
-            errors = default;
+            errors = null;
             return false;
         }
         errors = [.. _errors];
